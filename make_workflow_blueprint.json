@@ -1,0 +1,137 @@
+{
+  "name": "The Prop Center — Daily Auto-Post (3x/day)",
+  "description": "Runs daily at 9am, 1pm, and 6pm. Calls the content generator, then posts to Instagram and TikTok.",
+  "how_to_import": "In Make.com: Create Scenario > Import Blueprint > paste this file.",
+  "modules": [
+    {
+      "id": 1,
+      "name": "Schedule Trigger",
+      "app": "make-builtin",
+      "type": "schedule",
+      "schedule": {
+        "times": ["09:00", "13:00", "18:00"],
+        "timezone": "America/New_York"
+      },
+      "note": "Runs 3x daily. Each run generates and posts 1 of the 3 post types based on time of day."
+    },
+    {
+      "id": 2,
+      "name": "Determine Post Type",
+      "app": "make-builtin",
+      "type": "router",
+      "routes": [
+        {
+          "label": "9am → Viral Repost",
+          "condition": "hour(now) = 9",
+          "post_type": "repost"
+        },
+        {
+          "label": "1pm → Product Spotlight",
+          "condition": "hour(now) = 13",
+          "post_type": "product"
+        },
+        {
+          "label": "6pm → Inspiration Post",
+          "condition": "hour(now) = 18",
+          "post_type": "inspiration"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Call Claude API (Generate Caption)",
+      "app": "http",
+      "type": "http-request",
+      "method": "POST",
+      "url": "https://api.anthropic.com/v1/messages",
+      "headers": {
+        "x-api-key": "{{ANTHROPIC_API_KEY}}",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      "body": {
+        "model": "claude-sonnet-4-6",
+        "max_tokens": 350,
+        "system": "You are the social media voice for The Prop Center, a store for balloon artists and event decorators. Be enthusiastic, peer-to-peer, never salesy.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Write a {{post_type}} social media caption for balloon artists and event decorators. For product posts use: Available at thepropcenter.com — link in bio. Include 6-8 relevant hashtags at the end. Max 150 words."
+          }
+        ]
+      },
+      "note": "Replace ANTHROPIC_API_KEY with your actual key in Make.com variables."
+    },
+    {
+      "id": 4,
+      "name": "Get Shopify Product (for product posts)",
+      "app": "shopify",
+      "type": "shopify-get-product",
+      "connection": "Shopify — The Prop Center",
+      "action": "list-products",
+      "limit": 1,
+      "random_offset": true,
+      "note": "Connect Make's Shopify app to thepropcenter.myshopify.com. Used only on the 1pm product route."
+    },
+    {
+      "id": 5,
+      "name": "Post to Instagram",
+      "app": "instagram-for-business",
+      "type": "create-post",
+      "connection": "Instagram — The Prop Center",
+      "fields": {
+        "caption": "{{claude_response.content[0].text}}",
+        "media_url": "{{product_image_url}}",
+        "media_type": "IMAGE"
+      },
+      "note": "For video reposts, upload the video file first via the Instagram Media Upload module."
+    },
+    {
+      "id": 6,
+      "name": "Post to TikTok",
+      "app": "tiktok",
+      "type": "upload-video",
+      "connection": "TikTok — The Prop Center",
+      "fields": {
+        "caption": "{{claude_response.content[0].text}}",
+        "video_url": "{{video_url}}",
+        "privacy_level": "PUBLIC_TO_EVERYONE"
+      },
+      "note": "TikTok requires video content. For image posts, create a slideshow video first using FFmpeg or Canva automation."
+    },
+    {
+      "id": 7,
+      "name": "Log to Google Sheet",
+      "app": "google-sheets",
+      "type": "add-row",
+      "connection": "Google Sheets",
+      "spreadsheet": "The Prop Center — Post Log",
+      "sheet": "Posts",
+      "row": {
+        "Date": "{{now}}",
+        "Post Type": "{{post_type}}",
+        "Caption Preview": "{{left(claude_response.content[0].text, 100)}}",
+        "Instagram Status": "{{instagram_result.id}}",
+        "TikTok Status": "{{tiktok_result.share_id}}"
+      },
+      "note": "Keeps a log of everything posted so you can track what's working."
+    }
+  ],
+  "setup_checklist": [
+    "1. In Make.com, go to Connections and connect: Shopify, Instagram for Business, TikTok, Google Sheets",
+    "2. Import this blueprint as a new Scenario",
+    "3. Set ANTHROPIC_API_KEY as a Make variable (Variables tab in your Organization settings)",
+    "4. Create a Google Sheet called 'The Prop Center — Post Log' with columns: Date, Post Type, Caption Preview, Instagram Status, TikTok Status",
+    "5. Turn the Scenario ON and set it to Active",
+    "6. Test each route manually using the Run Once button before going live"
+  ],
+  "alternative_simpler_setup": {
+    "description": "If Make.com is complex, use this webhook approach instead",
+    "steps": [
+      "Run daily_content_generator.py via a cron job on your computer or a cheap VPS",
+      "The script outputs a JSON file with all 3 posts",
+      "Set up a Make.com webhook scenario that accepts the JSON and does the posting",
+      "This separates content generation (Python) from posting (Make.com)"
+    ]
+  }
+}
