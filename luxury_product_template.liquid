@@ -1,0 +1,453 @@
+{% comment %}
+  The Prop Center — Luxury Product Page Template
+  Upload to: Online Store > Themes > Edit code > Templates > product.luxury.liquid
+  Assign via: Products > [product] > Theme template > luxury
+{% endcomment %}
+
+{%- assign product = product -%}
+{%- assign current_variant = product.selected_or_first_available_variant -%}
+{%- assign featured_image = current_variant.featured_image | default: product.featured_image -%}
+
+<div class="luxury-product" data-section-id="luxury-product" data-product-id="{{ product.id }}">
+
+  {%- comment %} ── BREADCRUMB ── {% endcomment %}
+  <nav class="luxury-product__breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/">Home</a></li>
+      {%- for collection in product.collections limit: 1 -%}
+        <li><a href="{{ collection.url }}">{{ collection.title }}</a></li>
+      {%- endfor -%}
+      <li aria-current="page">{{ product.title }}</li>
+    </ol>
+  </nav>
+
+  <div class="luxury-product__layout">
+
+    {%- comment %} ── GALLERY ── {% endcomment %}
+    <div class="luxury-product__gallery">
+      <div class="luxury-product__gallery-main">
+        <img
+          id="luxury-main-image"
+          src="{{ featured_image | image_url: width: 1200 }}"
+          alt="{{ featured_image.alt | escape }}"
+          width="1200"
+          height="{{ 1200 | divided_by: featured_image.aspect_ratio | round }}"
+          loading="eager"
+        >
+        {%- if product.images.size > 1 -%}
+          <button class="luxury-product__gallery-arrow luxury-product__gallery-arrow--prev" aria-label="Previous image">&#8592;</button>
+          <button class="luxury-product__gallery-arrow luxury-product__gallery-arrow--next" aria-label="Next image">&#8594;</button>
+        {%- endif -%}
+      </div>
+
+      {%- if product.images.size > 1 -%}
+        <div class="luxury-product__gallery-thumbs">
+          {%- for image in product.images -%}
+            <button
+              class="luxury-product__thumb {% if forloop.first %}is-active{% endif %}"
+              data-src="{{ image | image_url: width: 1200 }}"
+              data-alt="{{ image.alt | escape }}"
+              aria-label="View image {{ forloop.index }}"
+            >
+              <img src="{{ image | image_url: width: 120 }}" alt="{{ image.alt | escape }}" width="120" height="120" loading="lazy">
+            </button>
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    </div>
+
+    {%- comment %} ── PRODUCT INFO ── {% endcomment %}
+    <div class="luxury-product__info">
+
+      {%- comment %} Collection label {% endcomment %}
+      {%- for collection in product.collections limit: 1 -%}
+        <p class="luxury-product__collection-label">{{ collection.title }}</p>
+      {%- endfor -%}
+
+      <h1 class="luxury-product__title">{{ product.title }}</h1>
+
+      {%- comment %} Price block {% endcomment %}
+      <div class="luxury-product__price" id="luxury-price">
+        {%- if current_variant.compare_at_price > current_variant.price -%}
+          <span class="luxury-product__price-compare">
+            {{- current_variant.compare_at_price | money -}}
+          </span>
+          <span class="luxury-product__price-sale">
+            {{- current_variant.price | money -}}
+          </span>
+          <span class="luxury-product__price-badge">
+            Save {{ current_variant.compare_at_price | minus: current_variant.price | times: 100 | divided_by: current_variant.compare_at_price }}%
+          </span>
+        {%- else -%}
+          <span class="luxury-product__price-regular">
+            {{- current_variant.price | money -}}
+          </span>
+        {%- endif -%}
+      </div>
+
+      {%- comment %} Variant selectors {% endcomment %}
+      {%- unless product.has_only_default_variant -%}
+        <div class="luxury-product__variants">
+          {%- for option in product.options_with_values -%}
+            <div class="luxury-product__option">
+              <label class="luxury-product__option-label">
+                {{ option.name }}:
+                <span class="luxury-product__option-selected" data-option-index="{{ forloop.index0 }}">
+                  {{ option.selected_value }}
+                </span>
+              </label>
+
+              {%- comment %} Swatch or pill depending on option name {% endcomment %}
+              {%- if option.name == 'Color' or option.name == 'Colour' -%}
+                <div class="luxury-product__swatches" data-option-index="{{ forloop.index0 }}">
+                  {%- for value in option.values -%}
+                    <button
+                      class="luxury-product__swatch {% if option.selected_value == value %}is-active{% endif %}"
+                      data-value="{{ value | escape }}"
+                      style="background-color: {{ value | downcase | replace: ' ', '' }};"
+                      aria-label="{{ value }}"
+                      title="{{ value }}"
+                    ></button>
+                  {%- endfor -%}
+                </div>
+              {%- else -%}
+                <div class="luxury-product__pills" data-option-index="{{ forloop.index0 }}">
+                  {%- for value in option.values -%}
+                    <button
+                      class="luxury-product__pill {% if option.selected_value == value %}is-active{% endif %}"
+                      data-value="{{ value | escape }}"
+                    >{{ value }}</button>
+                  {%- endfor -%}
+                </div>
+              {%- endif -%}
+            </div>
+          {%- endfor -%}
+        </div>
+      {%- endunless -%}
+
+      {%- comment %} Hidden variant selector for form {% endcomment %}
+      <select name="id" id="luxury-variant-select" class="luxury-product__variant-select visually-hidden" form="luxury-product-form">
+        {%- for variant in product.variants -%}
+          <option
+            value="{{ variant.id }}"
+            {% if variant == current_variant %}selected{% endif %}
+            {% unless variant.available %}disabled{% endunless %}
+            data-price="{{ variant.price }}"
+            data-compare-at="{{ variant.compare_at_price }}"
+            data-featured-image="{{ variant.featured_image | image_url: width: 1200 }}"
+          >
+            {{ variant.title }}
+          </option>
+        {%- endfor -%}
+      </select>
+
+      {%- comment %} Add to cart form {% endcomment %}
+      <form id="luxury-product-form" action="/cart/add" method="post">
+        <input type="hidden" name="id" value="{{ current_variant.id }}">
+
+        <div class="luxury-product__quantity">
+          <label for="luxury-quantity">Qty</label>
+          <div class="luxury-product__quantity-control">
+            <button type="button" class="luxury-product__qty-btn" data-action="decrease" aria-label="Decrease quantity">−</button>
+            <input type="number" id="luxury-quantity" name="quantity" value="1" min="1" aria-label="Quantity">
+            <button type="button" class="luxury-product__qty-btn" data-action="increase" aria-label="Increase quantity">+</button>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          class="luxury-product__add-to-cart {% unless current_variant.available %}is-sold-out{% endunless %}"
+          {% unless current_variant.available %}disabled{% endunless %}
+        >
+          {%- if current_variant.available -%}
+            Add to Cart
+          {%- else -%}
+            Sold Out
+          {%- endif -%}
+        </button>
+      </form>
+
+      {%- comment %} Trust badges {% endcomment %}
+      <div class="luxury-product__trust">
+        <div class="luxury-product__trust-item">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+          <span>Secure Checkout</span>
+        </div>
+        <div class="luxury-product__trust-item">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+          <span>UK-Wide Delivery</span>
+        </div>
+        <div class="luxury-product__trust-item">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          <span>Quality Guaranteed</span>
+        </div>
+      </div>
+
+      {%- comment %} Description accordion {% endcomment %}
+      <div class="luxury-product__description">
+        <button class="luxury-product__accordion-trigger is-open" aria-expanded="true" aria-controls="desc-panel">
+          Product Details <span aria-hidden="true">▾</span>
+        </button>
+        <div id="desc-panel" class="luxury-product__accordion-panel">
+          {{ product.description }}
+        </div>
+      </div>
+
+      {%- comment %} Shipping accordion {% endcomment %}
+      <div class="luxury-product__description">
+        <button class="luxury-product__accordion-trigger" aria-expanded="false" aria-controls="ship-panel">
+          Shipping & Returns <span aria-hidden="true">▾</span>
+        </button>
+        <div id="ship-panel" class="luxury-product__accordion-panel" hidden>
+          <p>Free standard delivery on orders over £150. Expedited options available at checkout. Returns accepted within 30 days — items must be unused and in original packaging.</p>
+        </div>
+      </div>
+
+    </div>{%- comment %} /.luxury-product__info {% endcomment %}
+  </div>{%- comment %} /.luxury-product__layout {% endcomment %}
+
+  {%- comment %} ── RELATED PRODUCTS ── {% endcomment %}
+  {%- assign related_collection = product.collections.first -%}
+  {%- if related_collection -%}
+    <section class="luxury-product__related">
+      <h2 class="luxury-product__related-heading">You Might Also Like</h2>
+      <div class="luxury-product__related-grid">
+        {%- for related in related_collection.products limit: 4 -%}
+          {%- unless related.id == product.id -%}
+            <a class="luxury-product__related-card" href="{{ related.url }}">
+              <div class="luxury-product__related-img-wrap">
+                <img
+                  src="{{ related.featured_image | image_url: width: 600 }}"
+                  alt="{{ related.featured_image.alt | escape }}"
+                  width="600"
+                  height="600"
+                  loading="lazy"
+                >
+              </div>
+              <p class="luxury-product__related-title">{{ related.title }}</p>
+              <p class="luxury-product__related-price">
+                {%- if related.compare_at_price > related.price -%}
+                  <s>{{ related.compare_at_price | money }}</s>&nbsp;
+                {%- endif -%}
+                {{ related.price | money }}
+              </p>
+            </a>
+          {%- endunless -%}
+        {%- endfor -%}
+      </div>
+    </section>
+  {%- endif -%}
+
+</div>
+
+{%- comment %} ── STYLES ── {% endcomment %}
+<style>
+  /* ─── Reset / Base ─────────────────────────────────── */
+  .luxury-product *, .luxury-product *::before, .luxury-product *::after { box-sizing: border-box; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+  /* ─── Layout ────────────────────────────────────────── */
+  .luxury-product { max-width: 1280px; margin: 0 auto; padding: 0 24px 80px; font-family: var(--font-body-family, 'Georgia', serif); color: #1a1a1a; }
+  .luxury-product__layout { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; margin-top: 24px; }
+  @media (max-width: 860px) { .luxury-product__layout { grid-template-columns: 1fr; gap: 32px; } }
+
+  /* ─── Breadcrumb ─────────────────────────────────────── */
+  .luxury-product__breadcrumb ol { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 20px 0 0; margin: 0; font-size: 13px; color: #888; }
+  .luxury-product__breadcrumb li + li::before { content: '/'; margin-right: 6px; }
+  .luxury-product__breadcrumb a { color: #888; text-decoration: none; }
+  .luxury-product__breadcrumb a:hover { color: #1a1a1a; }
+
+  /* ─── Gallery ────────────────────────────────────────── */
+  .luxury-product__gallery { position: sticky; top: 24px; align-self: start; }
+  .luxury-product__gallery-main { position: relative; background: #f5f5f0; border-radius: 4px; overflow: hidden; aspect-ratio: 1; }
+  .luxury-product__gallery-main img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity .3s; }
+  .luxury-product__gallery-arrow { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,.85); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+  .luxury-product__gallery-arrow--prev { left: 12px; }
+  .luxury-product__gallery-arrow--next { right: 12px; }
+  .luxury-product__gallery-thumbs { display: flex; gap: 8px; margin-top: 12px; overflow-x: auto; padding-bottom: 4px; }
+  .luxury-product__thumb { border: 2px solid transparent; border-radius: 4px; overflow: hidden; cursor: pointer; padding: 0; background: none; flex-shrink: 0; transition: border-color .2s; }
+  .luxury-product__thumb.is-active, .luxury-product__thumb:hover { border-color: #1a1a1a; }
+  .luxury-product__thumb img { display: block; width: 72px; height: 72px; object-fit: cover; }
+
+  /* ─── Info panel ─────────────────────────────────────── */
+  .luxury-product__collection-label { font-size: 11px; letter-spacing: .15em; text-transform: uppercase; color: #888; margin: 0 0 8px; }
+  .luxury-product__title { font-size: clamp(22px, 3vw, 34px); font-weight: 400; margin: 0 0 20px; line-height: 1.2; }
+
+  /* ─── Price ──────────────────────────────────────────── */
+  .luxury-product__price { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .luxury-product__price-regular { font-size: 24px; font-weight: 600; }
+  .luxury-product__price-sale { font-size: 24px; font-weight: 600; color: #c0392b; }
+  .luxury-product__price-compare { font-size: 18px; color: #999; text-decoration: line-through; }
+  .luxury-product__price-badge { background: #c0392b; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 8px; border-radius: 2px; }
+
+  /* ─── Variants ───────────────────────────────────────── */
+  .luxury-product__variants { display: flex; flex-direction: column; gap: 20px; margin-bottom: 24px; }
+  .luxury-product__option-label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; display: block; margin-bottom: 10px; }
+  .luxury-product__option-selected { font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .luxury-product__swatches, .luxury-product__pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .luxury-product__swatch { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; outline-offset: 3px; transition: outline .15s; }
+  .luxury-product__swatch.is-active, .luxury-product__swatch:hover { outline: 2px solid #1a1a1a; }
+  .luxury-product__pill { padding: 8px 18px; border: 1.5px solid #ccc; border-radius: 2px; background: none; cursor: pointer; font-size: 14px; transition: border-color .15s, background .15s; }
+  .luxury-product__pill.is-active, .luxury-product__pill:hover { border-color: #1a1a1a; background: #1a1a1a; color: #fff; }
+
+  /* ─── Quantity + CTA ─────────────────────────────────── */
+  .luxury-product__quantity { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .luxury-product__quantity label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+  .luxury-product__quantity-control { display: flex; align-items: center; border: 1.5px solid #ccc; border-radius: 2px; overflow: hidden; }
+  .luxury-product__qty-btn { width: 38px; height: 38px; background: none; border: none; cursor: pointer; font-size: 20px; line-height: 1; }
+  .luxury-product__quantity-control input { width: 48px; border: none; text-align: center; font-size: 16px; padding: 0; outline: none; -moz-appearance: textfield; }
+  .luxury-product__quantity-control input::-webkit-inner-spin-button, .luxury-product__quantity-control input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .luxury-product__add-to-cart { width: 100%; padding: 16px; background: #1a1a1a; color: #fff; font-size: 14px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; border: none; border-radius: 2px; cursor: pointer; transition: background .2s; margin-bottom: 20px; }
+  .luxury-product__add-to-cart:hover:not(:disabled) { background: #333; }
+  .luxury-product__add-to-cart.is-sold-out, .luxury-product__add-to-cart:disabled { background: #ccc; cursor: not-allowed; }
+
+  /* ─── Trust badges ───────────────────────────────────── */
+  .luxury-product__trust { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 28px; padding: 16px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+  .luxury-product__trust-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #555; }
+  .luxury-product__trust-item svg { width: 18px; height: 18px; fill: #555; flex-shrink: 0; }
+
+  /* ─── Accordion ──────────────────────────────────────── */
+  .luxury-product__accordion-trigger { width: 100%; background: none; border: none; border-top: 1px solid #eee; padding: 16px 0; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; cursor: pointer; text-align: left; }
+  .luxury-product__accordion-trigger span { transition: transform .2s; }
+  .luxury-product__accordion-trigger.is-open span { transform: rotate(180deg); }
+  .luxury-product__accordion-panel { padding: 0 0 16px; font-size: 15px; line-height: 1.7; color: #444; }
+  .luxury-product__accordion-panel p, .luxury-product__accordion-panel ul { margin: 0 0 12px; }
+  .luxury-product__accordion-panel ul { padding-left: 20px; }
+
+  /* ─── Related products ───────────────────────────────── */
+  .luxury-product__related { margin-top: 80px; border-top: 1px solid #eee; padding-top: 48px; }
+  .luxury-product__related-heading { font-size: 20px; font-weight: 400; text-align: center; margin: 0 0 32px; letter-spacing: .05em; }
+  .luxury-product__related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; }
+  .luxury-product__related-card { text-decoration: none; color: inherit; display: block; }
+  .luxury-product__related-img-wrap { aspect-ratio: 1; background: #f5f5f0; border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+  .luxury-product__related-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s; }
+  .luxury-product__related-card:hover img { transform: scale(1.04); }
+  .luxury-product__related-title { font-size: 14px; margin: 0 0 4px; }
+  .luxury-product__related-price { font-size: 14px; font-weight: 600; color: #1a1a1a; margin: 0; }
+  .luxury-product__related-price s { font-weight: 400; color: #999; margin-right: 4px; }
+</style>
+
+{%- comment %} ── SCRIPTS ── {% endcomment %}
+<script>
+(function() {
+  const gallery = document.querySelector('.luxury-product__gallery');
+  const mainImg = document.getElementById('luxury-main-image');
+  const thumbs = document.querySelectorAll('.luxury-product__thumb');
+  const variantSelect = document.getElementById('luxury-variant-select');
+  const priceEl = document.getElementById('luxury-price');
+  const addBtn = document.querySelector('.luxury-product__add-to-cart');
+  const hiddenId = document.querySelector('#luxury-product-form input[name="id"]');
+  const qtyInput = document.getElementById('luxury-quantity');
+
+  // ── Gallery thumbs
+  if (thumbs.length) {
+    thumbs.forEach(thumb => {
+      thumb.addEventListener('click', () => {
+        thumbs.forEach(t => t.classList.remove('is-active'));
+        thumb.classList.add('is-active');
+        mainImg.src = thumb.dataset.src;
+        mainImg.alt = thumb.dataset.alt;
+      });
+    });
+  }
+
+  // ── Gallery arrows
+  const images = {{ product.images | json }};
+  let currentIdx = 0;
+  document.querySelector('.luxury-product__gallery-arrow--prev')?.addEventListener('click', () => {
+    currentIdx = (currentIdx - 1 + images.length) % images.length;
+    thumbs[currentIdx]?.click();
+  });
+  document.querySelector('.luxury-product__gallery-arrow--next')?.addEventListener('click', () => {
+    currentIdx = (currentIdx + 1) % images.length;
+    thumbs[currentIdx]?.click();
+  });
+
+  // ── Variant pills / swatches → drive hidden select
+  const optionContainers = document.querySelectorAll('[data-option-index]');
+  function getSelectedOptions() {
+    const opts = [];
+    optionContainers.forEach(container => {
+      const active = container.querySelector('.is-active');
+      if (active) opts[parseInt(container.dataset.optionIndex)] = active.dataset.value;
+    });
+    return opts;
+  }
+
+  function syncVariant() {
+    const selected = getSelectedOptions();
+    const match = Array.from(variantSelect.options).find(opt => {
+      const parts = opt.textContent.split(' / ');
+      return selected.every((val, i) => parts[i]?.trim() === val);
+    });
+    if (match) {
+      variantSelect.value = match.value;
+      hiddenId.value = match.value;
+      updatePrice(match);
+      if (match.dataset.featuredImage && match.dataset.featuredImage !== 'null') {
+        mainImg.src = match.dataset.featuredImage;
+      }
+    }
+  }
+
+  function updatePrice(opt) {
+    const price = parseInt(opt.dataset.price);
+    const compare = parseInt(opt.dataset.compareAt);
+    const fmt = n => (n / 100).toLocaleString('en-GB', { style: 'currency', currency: 'GBP' });
+    const available = !opt.disabled;
+    let html = '';
+    if (compare > price) {
+      const pct = Math.round((compare - price) / compare * 100);
+      html = `<span class="luxury-product__price-compare">${fmt(compare)}</span><span class="luxury-product__price-sale">${fmt(price)}</span><span class="luxury-product__price-badge">Save ${pct}%</span>`;
+    } else {
+      html = `<span class="luxury-product__price-regular">${fmt(price)}</span>`;
+    }
+    priceEl.innerHTML = html;
+    addBtn.textContent = available ? 'Add to Cart' : 'Sold Out';
+    addBtn.disabled = !available;
+    addBtn.classList.toggle('is-sold-out', !available);
+  }
+
+  optionContainers.forEach(container => {
+    container.addEventListener('click', e => {
+      const btn = e.target.closest('.luxury-product__pill, .luxury-product__swatch');
+      if (!btn) return;
+      container.querySelectorAll('.is-active').forEach(el => el.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      const labelSpan = document.querySelector(`[data-option-index="${container.dataset.optionIndex}"]`);
+      if (labelSpan && !labelSpan.classList.contains(container.classList[0])) {
+        labelSpan.textContent = btn.dataset.value;
+      }
+      syncVariant();
+    });
+  });
+
+  // Update option label selected text
+  document.querySelectorAll('.luxury-product__option').forEach(optEl => {
+    const idx = optEl.querySelector('[data-option-index]')?.dataset.optionIndex;
+    const span = optEl.querySelector('.luxury-product__option-selected');
+    optEl.addEventListener('click', e => {
+      const btn = e.target.closest('[data-value]');
+      if (btn && span) span.textContent = btn.dataset.value;
+    });
+  });
+
+  // ── Quantity controls
+  qtyInput?.closest('.luxury-product__quantity-control')?.querySelectorAll('.luxury-product__qty-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      let val = parseInt(qtyInput.value) || 1;
+      qtyInput.value = btn.dataset.action === 'increase' ? val + 1 : Math.max(1, val - 1);
+    });
+  });
+
+  // ── Accordion
+  document.querySelectorAll('.luxury-product__accordion-trigger').forEach(trigger => {
+    trigger.addEventListener('click', () => {
+      const panel = document.getElementById(trigger.getAttribute('aria-controls'));
+      const isOpen = trigger.classList.toggle('is-open');
+      trigger.setAttribute('aria-expanded', isOpen);
+      panel.hidden = !isOpen;
+    });
+  });
+})();
+</script>
