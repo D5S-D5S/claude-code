@@ -53,14 +53,19 @@ GCP_LOCATION     = os.getenv("GCP_LOCATION",    "us-central1")
 # Imagen 3 model
 IMAGEN_MODEL     = "imagegeneration@006"   # Imagen 3 GA model ID on Vertex AI
 
-# Enhancement prompt — adjust tone/style as needed
+# Enhancement prompt — locked down so every image shares the exact same visual style
 ENHANCEMENT_PROMPT = (
-    "Professional luxury product photography. Place the item on a seamless white studio "
-    "background with soft, even lighting. Add a subtle shadow beneath for depth. "
-    "Remove any distracting backgrounds, watermarks, or cluttered elements. "
-    "Keep the product sharp, centred, and true to its original colours. "
-    "Final image should look like high-end e-commerce photography."
+    "Pure white seamless studio background (#FFFFFF), identical for all images. "
+    "Soft diffuse overhead lighting with a single gentle fill light from the left. "
+    "Product centred with 10% padding on all sides. "
+    "Subtle soft-edged drop shadow directly beneath the product, opacity 20%. "
+    "No gradients, no reflections, no props, no text overlays. "
+    "Keep exact product colours, textures, and proportions. "
+    "Final result: high-end e-commerce product photo, 2000x2000 pixels, square crop."
 )
+
+# Path to the resume log — completed product IDs are stored here
+PROGRESS_LOG = Path(__file__).parent / "enhanced_products.json"
 
 HEADERS = {
     "X-Shopify-Access-Token": SHOPIFY_TOKEN,
@@ -157,19 +162,52 @@ def enhance_image(model, image_bytes: bytes) -> bytes:
         prompt=ENHANCEMENT_PROMPT,
         number_of_images=1,
         # guidance_scale controls how strictly the prompt is followed (1–20)
-        guidance_scale=8,
+        guidance_scale=12,
     )
     if not response.images:
         raise RuntimeError("Imagen 3 returned no images.")
     return response.images[0]._image_bytes
 
 
+def standardise_image(image_bytes: bytes, size: int = 2000) -> bytes:
+    """
+    Paste the image onto a pure-white 2000×2000 canvas with centred padding.
+    Guarantees every uploaded image is pixel-identical in dimensions and
+    background colour, regardless of what Imagen 3 returns.
+    """
+    from PIL import Image
+
+    img = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+    canvas = Image.new("RGB", (size, size), (255, 255, 255))
+    img.thumbnail((size, size), Image.LANCZOS)
+    offset = ((size - img.width) // 2, (size - img.height) // 2)
+    canvas.paste(img, offset, mask=img.split()[3])
+    buf = io.BytesIO()
+    canvas.save(buf, format="JPEG", quality=95, optimize=True)
+    return buf.getvalue()
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
-def process_product(model, product: dict, dry_run: bool = False):
+def load_progress() -> set:
+    """Return set of already-enhanced product IDs from the progress log."""
+    if PROGRESS_LOG.exists():
+        return set(json.loads(PROGRESS_LOG.read_text()))
+    return set()
+
+
+def save_progress(done: set):
+    PROGRESS_LOG.write_text(json.dumps(sorted(done), indent=2))
+
+
+def process_product(model, product: dict, dry_run: bool = False, done: set = None):
     pid   = product["id"]
     title = product["title"]
     images = product.get("images", [])
+
+    if done and pid in done:
+        print(f"  SKIP  {title} — already enhanced")
+        return
 
     if not images:
         print(f"  SKIP  {title} — no images")
@@ -195,6 +233,9 @@ def process_product(model, product: dict, dry_run: bool = False):
         print(f"    ERROR enhancing: {e}")
         return
 
+    print(f"    Standardising to 2000×2000 white canvas...")
+    enhanced_bytes = standardise_image(enhanced_bytes)
+
     print(f"    Uploading enhanced image to Shopify...")
     new_img = upload_image_to_shopify(pid, enhanced_bytes, alt=featured.get("alt", title))
 
@@ -204,12 +245,17 @@ def process_product(model, product: dict, dry_run: bool = False):
 
     print(f"    Done — new image ID: {new_img.get('id')}")
 
+    if done is not None:
+        done.add(pid)
+        save_progress(done)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Enhance Shopify product images with Imagen 3")
     parser.add_argument("--dry-run",    action="store_true", help="Preview without making changes")
     parser.add_argument("--limit",      type=int, default=0, help="Max products to process (0 = all)")
     parser.add_argument("--product-id", type=int, default=0, help="Process a single product by ID")
+    parser.add_argument("--reset",      action="store_true", help="Clear the progress log and re-process all products")
     args = parser.parse_args()
 
     # Validate credentials
@@ -220,6 +266,14 @@ def main():
             "ERROR: GCP_PROJECT_ID is not configured.\n"
             "Set GCP_PROJECT_ID in your .env file or edit this script directly."
         )
+
+    # Progress log — lets long runs be safely interrupted and resumed
+    if args.reset and PROGRESS_LOG.exists():
+        PROGRESS_LOG.unlink()
+        print("Progress log cleared — will re-process all products.")
+    done = load_progress()
+    if done:
+        print(f"Resuming — {len(done)} products already enhanced, will skip them.")
 
     print("Connecting to Shopify...")
     if args.product_id:
@@ -234,7 +288,7 @@ def main():
     if args.limit:
         products = products[: args.limit]
 
-    print(f"Products to process: {len(products)}")
+    print(f"Products to process: {len(products)} ({len(done)} already done, will skip)")
 
     if not args.dry_run:
         print("Initialising Vertex AI / Imagen 3...")
@@ -244,11 +298,11 @@ def main():
         print("DRY RUN — no changes will be made\n")
 
     for product in products:
-        process_product(model, product, dry_run=args.dry_run)
+        process_product(model, product, dry_run=args.dry_run, done=done)
         if not args.dry_run:
             time.sleep(1)  # stay within Shopify rate limits
 
-    print("\nDone.")
+    print(f"\nDone. {len(done)} total products enhanced.")
 
 
 if __name__ == "__main__":
