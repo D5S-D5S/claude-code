@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 
 // Stripe Connect callback — mark account as connected
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // Verify the account is connected
-    const account = await stripe.accounts.retrieve(accountId);
+    const account = await getStripe().accounts.retrieve(accountId);
 
     if (account.details_submitted) {
       const supabase = await createClient();

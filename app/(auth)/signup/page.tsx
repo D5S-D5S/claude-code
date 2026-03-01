@@ -2,9 +2,37 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/env";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2, Check } from "lucide-react";
+import { Eye, EyeOff, Loader2, Check, AlertTriangle } from "lucide-react";
+
+function MisconfiguredBanner() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-red-100 p-8 text-center">
+        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle className="w-6 h-6 text-red-600" />
+        </div>
+        <h1 className="text-xl font-bold text-gray-900 mb-2">App misconfigured</h1>
+        <p className="text-gray-500 text-sm mb-4">
+          Supabase environment variables are missing or invalid.
+          Please set <code className="bg-gray-100 px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
+          <code className="bg-gray-100 px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> in your
+          Vercel project settings and redeploy.
+        </p>
+        <a
+          href="https://vercel.com/docs/projects/environment-variables"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-orange-500 hover:text-orange-600 font-medium"
+        >
+          How to set environment variables →
+        </a>
+      </div>
+    </div>
+  );
+}
 
 const PLANS = [
   {
@@ -26,7 +54,9 @@ const PLANS = [
 
 export default function SignupPage() {
   const router = useRouter();
-  const supabase = createClient();
+
+  const supabaseReady = isSupabaseConfigured();
+  const supabase = supabaseReady ? createClient() : null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,8 +67,13 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  if (!supabaseReady) {
+    return <MisconfiguredBanner />;
+  }
+
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
+    if (!supabase) return;
     setLoading(true);
     setError(null);
 

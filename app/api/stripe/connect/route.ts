@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 
 // GET /api/stripe/connect — redirect to Stripe OAuth
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   // Create a Stripe Connect account link
   try {
-    const account = await stripe.accounts.create({
+    const account = await getStripe().accounts.create({
       type: "express",
       metadata: { user_id: user.id },
     });
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       .update({ stripe_account_id: account.id })
       .eq("id", user.id);
 
-    const accountLink = await stripe.accountLinks.create({
+    const accountLink = await getStripe().accountLinks.create({
       account: account.id,
       refresh_url: `${appUrl}/api/stripe/connect?user_id=${user.id}`,
       return_url: `${appUrl}/api/stripe/callback?account=${account.id}&user_id=${user.id}`,
