@@ -6,7 +6,7 @@ import { Plus, Boxes, AlertTriangle, Loader2, X, Search } from "lucide-react";
 import { InventoryItem } from "@/types";
 
 const CATEGORIES = ["Latex", "Foil", "Accessories", "Equipment", "Other"];
-const SIZES = ["5\"", "11\"", "16\"", "24\"", "36\"", "N/A"];
+const SIZES = ['5"', '11"', '16"', '24"', '36"', "N/A"];
 
 export default function InventoryPage() {
   const supabase = createClient();
@@ -19,7 +19,7 @@ export default function InventoryPage() {
     name: "",
     category: "Latex",
     color: "",
-    size: "11\"",
+    size: '11"',
     quantity_in_stock: "",
     low_stock_threshold: "10",
     unit_cost: "",
@@ -68,7 +68,7 @@ export default function InventoryPage() {
     if (!error && data) {
       setItems((prev) => [...prev, data as InventoryItem].sort((a, b) => a.name.localeCompare(b.name)));
       setShowModal(false);
-      setForm({ name: "", category: "Latex", color: "", size: "11\"", quantity_in_stock: "", low_stock_threshold: "10", unit_cost: "", supplier: "", sku: "" });
+      setForm({ name: "", category: "Latex", color: "", size: '11"', quantity_in_stock: "", low_stock_threshold: "10", unit_cost: "", supplier: "", sku: "" });
     }
     setSaving(false);
   }
@@ -235,7 +235,7 @@ export default function InventoryPage() {
                   required
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="11\" Latex Balloons"
+                  placeholder={'11" Latex Balloons'}
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
                 />
               </div>

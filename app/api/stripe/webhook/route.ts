@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     case "checkout.session.completed": {
-      const session = event.data.object as Stripe.CheckoutSession;
+      const session = event.data.object as Stripe.Checkout.Session;
       const quoteId = session.metadata?.quote_id;
 
       if (quoteId) {
