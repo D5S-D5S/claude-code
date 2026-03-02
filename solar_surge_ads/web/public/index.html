@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Solar Surge — Ad Manager</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Base ────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #09090b;
+      --surface:   #141417;
+      --surface2:  #1c1c20;
+      --surface3:  #232328;
+      --border:    #2a2a30;
+      --border2:   #3a3a42;
+      --text:      #f1f1f3;
+      --muted:     #6b7280;
+      --dim:       #4b5563;
+      --accent:    #f97316;
+      --accent2:   #fb923c;
+      --scale:     #22c55e;
+      --scale-bg:  rgba(34,197,94,.12);
+      --watch:     #eab308;
+      --watch-bg:  rgba(234,179,8,.12);
+      --kill:      #ef4444;
+      --kill-bg:   rgba(239,68,68,.12);
+      --pending:   #818cf8;
+      --pending-bg:rgba(129,140,248,.12);
+      --sgs:       #3b82f6;
+      --sgs-bg:    rgba(59,130,246,.12);
+      --hes:       #a855f7;
+      --hes-bg:    rgba(168,85,247,.12);
+      --r:         8px;
+    }
+    html { font-size: 14px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+           background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; }
+    a { color: var(--accent); text-decoration: none; }
+    button { cursor: pointer; font-family: inherit; }
+
+    /* ── Topbar ──────────────────────────────────────────────────────── */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(9,9,11,.88); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 16px; padding: 0 24px; height: 52px;
+    }
+    .topbar-logo { display: flex; align-items: center; gap: 8px; }
+    .topbar-logo span { font-size: 15px; font-weight: 800; letter-spacing: -.3px; }
+    .topbar-logo .dot { color: var(--accent); }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .refresh-btn {
+      background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+      border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 500;
+      transition: background .15s;
+    }
+    .refresh-btn:hover { background: var(--surface3); }
+    .refresh-btn.loading { opacity: .5; pointer-events: none; }
+    select.range-select {
+      background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+      border-radius: 6px; padding: 5px 10px; font-size: 12px;
+    }
+    .last-updated { font-size: 11px; color: var(--muted); }
+
+    /* ── Layout ──────────────────────────────────────────────────────── */
+    .app { max-width: 1440px; margin: 0 auto; padding: 20px 24px; }
+
+    /* ── Client nav ──────────────────────────────────────────────────── */
+    .client-nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .client-btn {
+      display: flex; flex-direction: column; gap: 1px;
+      padding: 10px 18px; border-radius: var(--r);
+      background: var(--surface); border: 1px solid var(--border2);
+      color: var(--muted); font-weight: 600; font-size: 13px;
+      transition: all .15s;
+    }
+    .client-btn .key  { font-size: 10px; letter-spacing: .5px; text-transform: uppercase; }
+    .client-btn .name { font-size: 13px; color: var(--text); }
+    .client-btn .meta { font-size: 11px; color: var(--muted); font-weight: 400; }
+    .client-btn:hover { border-color: var(--border2); background: var(--surface2); }
+    .client-btn.active.sgs { background: var(--sgs-bg); border-color: var(--sgs); }
+    .client-btn.active.hes { background: var(--hes-bg); border-color: var(--hes); }
+    .client-btn.active .name { color: var(--text); }
+
+    /* ── Section headings ────────────────────────────────────────────── */
+    .section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .section-head h2 { font-size: 14px; font-weight: 700; }
+    .section-head .sep { flex: 1; height: 1px; background: var(--border); }
+    .badge {
+      font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: .3px;
+    }
+    .badge.paused { background: rgba(107,114,128,.15); color: var(--muted); }
+    .badge.active { background: var(--scale-bg); color: var(--scale); }
+
+    /* ── Metric cards row ────────────────────────────────────────────── */
+    .metric-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+                  gap: 10px; margin-bottom: 20px; }
+    .mcard {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 14px 16px;
+    }
+    .mcard .mlabel { font-size: 10px; color: var(--muted); text-transform: uppercase;
+                     letter-spacing: .4px; margin-bottom: 6px; }
+    .mcard .mvalue { font-size: 22px; font-weight: 800; line-height: 1; }
+    .mcard .msub   { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .mcard .mvalue.green  { color: var(--scale); }
+    .mcard .mvalue.yellow { color: var(--watch); }
+    .mcard .mvalue.red    { color: var(--kill);  }
+
+    /* ── Recommendation banner ───────────────────────────────────────── */
+    .rec {
+      border-radius: var(--r); padding: 12px 16px; margin-bottom: 20px;
+      font-size: 13px; line-height: 1.6;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-left-width: 3px;
+    }
+    .rec.sgs { border-left-color: var(--sgs); }
+    .rec.hes { border-left-color: var(--hes); }
+    .rec strong { color: var(--accent); }
+
+    /* ── Ad grid ─────────────────────────────────────────────────────── */
+    .ad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+               gap: 14px; margin-bottom: 28px; }
+
+    .ad-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); overflow: hidden;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .ad-card:hover { border-color: var(--border2);
+                     box-shadow: 0 4px 24px rgba(0,0,0,.4); }
+    .ad-card.verdict-scale { border-color: rgba(34,197,94,.25); }
+    .ad-card.verdict-kill  { border-color: rgba(239,68,68,.2); }
+    .ad-card.verdict-watch { border-color: rgba(234,179,8,.2); }
+
+    .ad-head { padding: 12px 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .ad-title { font-weight: 700; font-size: 13px; }
+    .ad-angle { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+
+    .vbadge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+              white-space: nowrap; flex-shrink: 0; }
+    .vbadge.scale   { background: var(--scale-bg);   color: var(--scale); }
+    .vbadge.watch   { background: var(--watch-bg);   color: var(--watch); }
+    .vbadge.kill    { background: var(--kill-bg);    color: var(--kill);  }
+    .vbadge.pending { background: var(--pending-bg); color: var(--pending); }
+
+    /* ── Metrics grid inside card ─────────────────────────────────────── */
+    .metrics-grid { display: grid; grid-template-columns: repeat(4,1fr);
+                    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .mg-cell { padding: 9px 8px; text-align: center; }
+    .mg-cell:not(:last-child) { border-right: 1px solid var(--border); }
+    .mg-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
+    .mg-val   { font-size: 16px; font-weight: 800; margin-top: 2px; }
+    .mg-val.g { color: var(--scale); }
+    .mg-val.y { color: var(--watch); }
+    .mg-val.r { color: var(--kill);  }
+
+    .imp-bar { height: 2px; background: var(--border); margin-top: 4px; border-radius: 2px; }
+    .imp-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .4s; }
+
+    /* ── Ad copy ─────────────────────────────────────────────────────── */
+    .ad-copy { padding: 10px 14px; }
+    .copy-hook { font-weight: 700; font-size: 12px; line-height: 1.5; }
+    .copy-body { display: none; font-size: 11px; color: var(--muted); white-space: pre-line;
+                 line-height: 1.6; margin-top: 6px; }
+    .copy-cta  { font-size: 11px; color: var(--accent); font-weight: 600; margin-top: 6px; }
+    .copy-toggle { font-size: 10px; color: var(--dim); background: none; border: none;
+                   margin-top: 4px; text-decoration: underline; }
+    .copy-toggle:hover { color: var(--muted); }
+
+    /* ── Explanation ─────────────────────────────────────────────────── */
+    .ad-explanation { padding: 0 14px 8px; font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+    /* ── Card footer ─────────────────────────────────────────────────── */
+    .ad-footer { padding: 8px 14px; border-top: 1px solid var(--border);
+                 display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .status-pill { font-size: 10px; font-weight: 700; padding: 2px 8px;
+                   border-radius: 20px; letter-spacing: .3px; }
+    .status-pill.paused { background: rgba(107,114,128,.12); color: var(--muted); }
+    .status-pill.active { background: var(--scale-bg); color: var(--scale); }
+    .spend-tag { font-size: 11px; color: var(--muted); }
+    .card-btns { margin-left: auto; display: flex; gap: 6px; }
+    .btn-sm {
+      font-size: 11px; padding: 4px 10px; border-radius: 5px;
+      border: 1px solid var(--border2); background: var(--surface2);
+      color: var(--text); transition: all .15s;
+    }
+    .btn-sm:hover { background: var(--surface3); }
+    .btn-sm.pause { border-color: rgba(234,179,8,.4); color: var(--watch); }
+    .btn-sm.pause:hover { background: var(--watch-bg); }
+    .btn-sm.enable { border-color: rgba(34,197,94,.4); color: var(--scale); }
+    .btn-sm.enable:hover { background: var(--scale-bg); }
+    .btn-sm.chart-btn { color: var(--accent); border-color: rgba(249,115,22,.3); }
+    .btn-sm.chart-btn:hover { background: rgba(249,115,22,.08); }
+    .btn-sm:disabled { opacity: .4; pointer-events: none; }
+
+    /* ── Leads table ─────────────────────────────────────────────────── */
+    .leads-section { margin-bottom: 28px; }
+    .leads-controls { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+    .leads-controls input {
+      background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+      border-radius: 6px; padding: 6px 12px; font-size: 12px; flex: 1; min-width: 200px;
+    }
+    .leads-controls input::placeholder { color: var(--dim); }
+    .export-btn {
+      background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+      border-radius: 6px; padding: 6px 14px; font-size: 12px;
+    }
+    .export-btn:hover { background: var(--surface3); }
+    .leads-count { font-size: 12px; color: var(--muted); }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--r); }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead th {
+      background: var(--surface2); padding: 10px 14px; text-align: left;
+      font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase;
+      letter-spacing: .4px; border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    tbody td { padding: 10px 14px; color: var(--text); }
+    tbody td.muted { color: var(--muted); }
+    .tag { display: inline-block; font-size: 10px; padding: 1px 7px;
+           border-radius: 20px; background: var(--surface3); color: var(--muted); }
+
+    /* ── Toast notification ──────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 200;
+      background: var(--surface3); border: 1px solid var(--border2);
+      border-radius: var(--r); padding: 12px 18px; font-size: 13px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+      transform: translateY(80px); opacity: 0;
+      transition: all .25s; pointer-events: none;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.ok   { border-left: 3px solid var(--scale); }
+    #toast.err  { border-left: 3px solid var(--kill);  }
+
+    /* ── Chart modal ─────────────────────────────────────────────────── */
+    .overlay { display: none; position: fixed; inset: 0;
+               background: rgba(0,0,0,.8); z-index: 100;
+               align-items: center; justify-content: center; padding: 20px; }
+    .overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 12px; width: 100%; max-width: 780px;
+      padding: 24px; position: relative; max-height: 90vh; overflow-y: auto;
+    }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      background: var(--surface2); border: 1px solid var(--border2);
+      color: var(--muted); border-radius: 5px; width: 28px; height: 28px;
+      font-size: 16px; display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal h3 { font-size: 15px; font-weight: 700; }
+    .modal .modal-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .chart-wrap { margin-top: 20px; height: 260px; }
+    .chart-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px,1fr));
+                   gap: 10px; margin-top: 16px; }
+    .cs-item { background: var(--surface2); border: 1px solid var(--border);
+               border-radius: 6px; padding: 10px 12px; text-align: center; }
+    .cs-item .cs-label { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+    .cs-item .cs-val   { font-size: 18px; font-weight: 800; margin-top: 3px; }
+
+    /* ── Empty / loading states ──────────────────────────────────────── */
+    .empty { text-align: center; padding: 50px 20px; color: var(--muted); font-size: 13px; }
+    .spinner { display: inline-block; width: 24px; height: 24px;
+               border: 3px solid var(--border2); border-top-color: var(--accent);
+               border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 10px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Tabs inside client view ─────────────────────────────────────── */
+    .view-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border);
+                 margin-bottom: 20px; }
+    .vtab {
+      padding: 8px 18px; font-size: 13px; font-weight: 600; color: var(--muted);
+      background: none; border: none; border-bottom: 2px solid transparent;
+      margin-bottom: -1px; transition: all .15s;
+    }
+    .vtab:hover   { color: var(--text); }
+    .vtab.active  { color: var(--text); border-bottom-color: var(--accent); }
+
+    /* ── Responsive ──────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .app { padding: 12px; }
+      .ad-grid { grid-template-columns: 1fr; }
+      .metric-row { grid-template-columns: repeat(2,1fr); }
+      .topbar { padding: 0 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Topbar ──────────────────────────────────────────────────────────────── -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <span>☀️ Solar<span class="dot">Surge</span></span>
+  </div>
+  <div class="topbar-right">
+    <select class="range-select" id="range-select" onchange="onRangeChange()">
+      <option value="3">3 days</option>
+      <option value="7" selected>7 days</option>
+      <option value="14">14 days</option>
+      <option value="30">30 days</option>
+    </select>
+    <button class="refresh-btn" id="refresh-btn" onclick="reload()">↻ Refresh</button>
+    <span class="last-updated" id="last-updated"></span>
+  </div>
+</div>
+
+<!-- ── App ────────────────────────────────────────────────────────────────── -->
+<div class="app">
+
+  <!-- Client nav -->
+  <div class="client-nav" id="client-nav">
+    <button class="client-btn sgs active" onclick="switchClient('sgs')">
+      <span class="key">SGS</span>
+      <span class="name">Smart Group Scotland</span>
+      <span class="meta" id="meta-sgs">Scotland · AB DD PH FK KY G EH ML</span>
+    </button>
+    <button class="client-btn hes" onclick="switchClient('hes')">
+      <span class="key">HES</span>
+      <span class="name">Home Eco Solutions</span>
+      <span class="meta" id="meta-hes">South Wales · SA CF NP</span>
+    </button>
+  </div>
+
+  <!-- View tabs -->
+  <div class="view-tabs">
+    <button class="vtab active" onclick="switchView('performance')">Performance</button>
+    <button class="vtab" onclick="switchView('leads')">Leads</button>
+  </div>
+
+  <!-- ── Performance view ── -->
+  <div id="view-performance">
+
+    <!-- Metric cards -->
+    <div class="metric-row" id="metric-row">
+      <div class="mcard"><div class="mlabel">Spend</div><div class="mvalue" id="m-spend">—</div><div class="msub" id="m-spend-sub">last 7 days</div></div>
+      <div class="mcard"><div class="mlabel">Leads</div><div class="mvalue" id="m-leads">—</div></div>
+      <div class="mcard"><div class="mlabel">Blended CPL</div><div class="mvalue" id="m-cpl">—</div></div>
+      <div class="mcard"><div class="mlabel">✅ Scale</div><div class="mvalue green" id="m-scale">—</div></div>
+      <div class="mcard"><div class="mlabel">⚠️ Watch</div><div class="mvalue yellow" id="m-watch">—</div></div>
+      <div class="mcard"><div class="mlabel">❌ Kill</div><div class="mvalue red" id="m-kill">—</div></div>
+      <div class="mcard"><div class="mlabel">⏳ Pending</div><div class="mvalue" style="color:var(--pending)" id="m-pending">—</div></div>
+    </div>
+
+    <!-- Recommendation -->
+    <div class="rec sgs" id="rec-banner">
+      <strong>📋 Recommendation: </strong><span id="rec-text">Loading…</span>
+    </div>
+
+    <!-- Ads grid -->
+    <div class="section-head">
+      <h2>Ad Performance</h2>
+      <div class="sep"></div>
+      <span id="campaign-badge" class="badge paused">PAUSED</span>
+    </div>
+    <div class="ad-grid" id="ad-grid">
+      <div class="empty"><div class="spinner"></div><br>Loading ads…</div>
+    </div>
+  </div>
+
+  <!-- ── Leads view ── -->
+  <div id="view-leads" style="display:none">
+    <div class="leads-section">
+      <div class="leads-controls">
+        <input type="text" id="lead-search" placeholder="Search by name, email, phone…" oninput="filterLeads()"/>
+        <span class="leads-count" id="leads-count"></span>
+        <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table id="leads-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Owns Home?</th>
+              <th>Ad</th>
+            </tr>
+          </thead>
+          <tbody id="leads-tbody">
+            <tr><td colspan="8" class="empty">Loading leads…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Chart modal -->
+<div class="overlay" id="chart-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeChart()">✕</button>
+    <h3 id="chart-ad-name"></h3>
+    <div class="modal-meta" id="chart-ad-meta"></div>
+    <div class="chart-wrap"><canvas id="perf-chart"></canvas></div>
+    <div class="chart-stats" id="chart-stats"></div>
+  </div>
+</div>
+
+<script>
+/* ── State ────────────────────────────────────────────────────────────────── */
+let activeClient = 'sgs';
+let activeView   = 'performance';
+let activeDays   = 7;
+let campaigns    = {};
+let allLeads     = [];
+let chartInst    = null;
+
+/* ── Utilities ────────────────────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+
+function toast(msg, type = 'ok') {
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function fmt(v, prefix = '', suffix = '', dp = 2) {
+  if (v === null || v === undefined) return '—';
+  return `${prefix}${Number(v).toFixed(dp)}${suffix}`;
+}
+
+function verdictCls(v) {
+  if (v.includes('SCALE'))    return 'scale';
+  if (v.includes('WATCH'))    return 'watch';
+  if (v.includes('KILL'))     return 'kill';
+  return 'pending';
+}
+
+function metricCls(val, type) {
+  if (val == null) return '';
+  if (type === 'cpl') return val <= 8 ? 'g' : val <= 15 ? 'y' : 'r';
+  if (type === 'ctr') return val >= 1.5 ? 'g' : val >= 1.0 ? 'y' : 'r';
+  return '';
+}
+
+/* ── Client / view switching ─────────────────────────────────────────────── */
+function switchClient(c) {
+  activeClient = c;
+  document.querySelectorAll('.client-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.client-btn.${c}`).classList.add('active');
+  $('rec-banner').className = `rec ${c}`;
+  load();
+}
+
+function switchView(v) {
+  activeView = v;
+  document.querySelectorAll('.vtab').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  $('view-performance').style.display = v === 'performance' ? '' : 'none';
+  $('view-leads').style.display       = v === 'leads'       ? '' : 'none';
+  if (v === 'leads') loadLeads();
+}
+
+function onRangeChange() {
+  activeDays = parseInt($('range-select').value);
+  $('m-spend-sub').textContent = `last ${activeDays} days`;
+  if (activeView === 'performance') load();
+}
+
+function reload() { load(); if (activeView === 'leads') loadLeads(); }
+
+/* ── Load campaigns ──────────────────────────────────────────────────────── */
+async function loadCampaigns() {
+  const res  = await fetch('/api/campaigns');
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  campaigns = data.grouped;
+  return data;
+}
+
+/* ── Load performance ────────────────────────────────────────────────────── */
+async function load() {
+  const btn = $('refresh-btn');
+  btn.classList.add('loading');
+  btn.textContent = '↻ Refreshing…';
+
+  try {
+    const camData = await loadCampaigns();
+    const clientCamps = camData.grouped[activeClient] || [];
+
+    if (!clientCamps.length) {
+      $('ad-grid').innerHTML = `<div class="empty">No campaigns found for this client.<br><small>Run: <code>python launcher.py --client ${activeClient} create-campaign</code></small></div>`;
+      resetMetrics();
+      $('rec-text').textContent = 'No campaigns created yet.';
+      return;
+    }
+
+    // Use first campaign
+    const camp = clientCamps[0];
+    $('campaign-badge').textContent = camp.status;
+    $('campaign-badge').className   = `badge ${camp.status.toLowerCase()}`;
+
+    // Fetch insights
+    const insRes  = await fetch(`/api/insights?campaign_id=${camp.id}&days=${activeDays}`);
+    const insData = await insRes.json();
+    if (insData.error) throw new Error(insData.error);
+
+    renderMetrics(insData);
+    renderAds(insData.ads);
+    $('rec-text').textContent = insData.recommendation;
+
+    $('last-updated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+  } catch (err) {
+    toast(`Error: ${err.message}`, 'err');
+    $('ad-grid').innerHTML = `<div class="empty" style="color:var(--kill)">❌ ${err.message}</div>`;
+  } finally {
+    btn.classList.remove('loading');
+    btn.textContent = '↻ Refresh';
+  }
+}
+
+/* ── Render metric cards ─────────────────────────────────────────────────── */
+function resetMetrics() {
+  ['m-spend','m-leads','m-cpl','m-scale','m-watch','m-kill','m-pending'].forEach(id => $(id).textContent = '—');
+}
+
+function renderMetrics(d) {
+  const t = d.totals;
+  $('m-spend').textContent   = `£${(t.spend||0).toFixed(2)}`;
+  $('m-leads').textContent   = t.leads;
+  $('m-cpl').textContent     = t.cpl ? `£${t.cpl.toFixed(2)}` : '—';
+  $('m-scale').textContent   = d.counts.scale;
+  $('m-watch').textContent   = d.counts.watch;
+  $('m-kill').textContent    = d.counts.kill;
+  $('m-pending').textContent = d.counts.pending;
+}
+
+/* ── Render ad cards ─────────────────────────────────────────────────────── */
+function renderAds(ads) {
+  if (!ads.length) {
+    $('ad-grid').innerHTML = '<div class="empty">No ads found. Run <code>create-ads</code> after setting up the lead form.</div>';
+    return;
+  }
+
+  const maxImp = Math.max(...ads.map(a => a.metrics.impressions), 1);
+  const minImp = 500; // threshold bar reference
+
+  $('ad-grid').innerHTML = ads.map(ad => {
+    const m   = ad.metrics;
+    const vc  = ad.verdictCls || verdictCls(ad.verdict);
+    const sc  = (ad.status || 'PAUSED').toLowerCase();
+    const pct = Math.min(100, Math.round((m.impressions / Math.max(maxImp, minImp)) * 100));
+
+    return `
+    <div class="ad-card verdict-${vc}" id="card-${ad.id}">
+      <div class="ad-head">
+        <div style="min-width:0;flex:1">
+          <div class="ad-title">${ad.name}</div>
+          <div class="ad-angle">${ad.angle || ''}</div>
+        </div>
+        <div class="vbadge ${vc}">${ad.verdict}</div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="mg-cell">
+          <div class="mg-label">Impressions</div>
+          <div class="mg-val">${m.impressions.toLocaleString()}</div>
+          <div class="imp-bar"><div class="imp-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div class="mg-cell">
+          <div class="mg-label">CTR</div>
+          <div class="mg-val ${metricCls(m.ctr,'ctr')}">${m.ctr != null ? m.ctr.toFixed(2)+'%' : '—'}</div>
+        </div>
+        <div class="mg-cell">
+          <div class="mg-label">Leads</div>
+          <div class="mg-val">${m.leads}</div>
+        </div>
+        <div class="mg-cell">
+          <div class="mg-label">CPL</div>
+          <div class="mg-val ${metricCls(m.cpl,'cpl')}">${m.cpl != null ? '£'+m.cpl.toFixed(2) : '—'}</div>
+        </div>
+      </div>
+
+      <div class="ad-copy" id="copy-${ad.id}">
+        <div class="copy-hook">"${escHtml(ad.copy.hook)}"</div>
+        <div class="copy-body" id="body-${ad.id}">${escHtml(ad.copy.body)}</div>
+        <div class="copy-cta">${escHtml(ad.copy.cta)}</div>
+        <button class="copy-toggle" onclick="toggleCopy('${ad.id}')">Show full copy ↓</button>
+      </div>
+
+      <div class="ad-explanation">→ ${escHtml(ad.explanation)}</div>
+
+      <div class="ad-footer">
+        <span class="status-pill ${sc}" id="pill-${ad.id}">${ad.status || 'PAUSED'}</span>
+        <span class="spend-tag">£${m.spend.toFixed(2)} spent</span>
+        <div class="card-btns">
+          <button class="btn-sm chart-btn" onclick="openChart('${ad.id}','${escHtml(ad.name)}','${escHtml(ad.angle || '')}')">📊 Chart</button>
+          ${ad.status === 'PAUSED'
+            ? `<button class="btn-sm enable" id="tog-${ad.id}" onclick="toggleStatus('${ad.id}','ACTIVE')">▶ Enable</button>`
+            : `<button class="btn-sm pause"  id="tog-${ad.id}" onclick="toggleStatus('${ad.id}','PAUSED')">⏸ Pause</button>`
+          }
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleCopy(adId) {
+  const body = $(`body-${adId}`);
+  const btn  = body.nextElementSibling.nextElementSibling; // copy-toggle
+  const open = body.style.display === 'block';
+  body.style.display = open ? 'none' : 'block';
+  btn.textContent    = open ? 'Show full copy ↓' : 'Hide copy ↑';
+}
+
+/* ── Toggle ad status ────────────────────────────────────────────────────── */
+async function toggleStatus(adId, newStatus) {
+  const btn  = $(`tog-${adId}`);
+  const pill = $(`pill-${adId}`);
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  try {
+    const res  = await fetch('/api/update-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: adId, status: newStatus }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // Update UI
+    pill.className   = `status-pill ${newStatus.toLowerCase()}`;
+    pill.textContent = newStatus;
+    if (newStatus === 'PAUSED') {
+      btn.className   = 'btn-sm enable';
+      btn.textContent = '▶ Enable';
+      btn.onclick     = () => toggleStatus(adId, 'ACTIVE');
+    } else {
+      btn.className   = 'btn-sm pause';
+      btn.textContent = '⏸ Pause';
+      btn.onclick     = () => toggleStatus(adId, 'PAUSED');
+    }
+    btn.disabled = false;
+    toast(`Ad ${newStatus === 'PAUSED' ? 'paused' : 'enabled'} ✓`, 'ok');
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Retry';
+    toast(`Failed: ${err.message}`, 'err');
+  }
+}
+
+/* ── Load leads ──────────────────────────────────────────────────────────── */
+async function loadLeads() {
+  const clientCamps = campaigns[activeClient] || [];
+  if (!clientCamps.length) {
+    $('leads-tbody').innerHTML = '<tr><td colspan="8" class="empty">No campaigns yet.</td></tr>';
+    return;
+  }
+  $('leads-tbody').innerHTML = '<tr><td colspan="8" class="empty"><div class="spinner"></div></td></tr>';
+
+  try {
+    const campId = clientCamps[0].id;
+    const res    = await fetch(`/api/leads?campaign_id=${campId}&limit=200`);
+    const data   = await res.json();
+    if (data.error) throw new Error(data.error);
+    allLeads = data.leads || [];
+    $('leads-count').textContent = `${allLeads.length} lead${allLeads.length !== 1 ? 's' : ''}`;
+    renderLeads(allLeads);
+  } catch (err) {
+    $('leads-tbody').innerHTML = `<tr><td colspan="8" style="color:var(--kill);padding:20px">❌ ${err.message}</td></tr>`;
+  }
+}
+
+function renderLeads(leads) {
+  if (!leads.length) {
+    $('leads-tbody').innerHTML = '<tr><td colspan="8" class="empty">No leads yet. Ads are paused — enable them to start collecting.</td></tr>';
+    return;
+  }
+  $('leads-tbody').innerHTML = leads.map((lead, i) => {
+    const f   = lead.fields || {};
+    const dt  = new Date(lead.created_at);
+    const adShort = (lead.ad_name || '').replace(/SGS_BF_|HES_BF_/g,'');
+    return `
+    <tr>
+      <td class="muted">${i + 1}</td>
+      <td class="muted">${dt.toLocaleDateString('en-GB')} ${dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</td>
+      <td>${escHtml(f.first_name || f['first name'] || '—')}</td>
+      <td>${escHtml(f.last_name  || f['last name']  || '—')}</td>
+      <td>${escHtml(f.phone_number || f.phone || '—')}</td>
+      <td>${escHtml(f.email || '—')}</td>
+      <td><span class="tag">${escHtml(f.home_ownership || f['do you own your home?'] || '—')}</span></td>
+      <td class="muted">${escHtml(adShort)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterLeads() {
+  const q = $('lead-search').value.toLowerCase();
+  if (!q) { renderLeads(allLeads); $('leads-count').textContent = `${allLeads.length} leads`; return; }
+  const filtered = allLeads.filter(l => {
+    const f = l.fields || {};
+    return Object.values(f).some(v => String(v).toLowerCase().includes(q))
+        || (l.ad_name || '').toLowerCase().includes(q);
+  });
+  renderLeads(filtered);
+  $('leads-count').textContent = `${filtered.length} of ${allLeads.length}`;
+}
+
+/* ── CSV export ──────────────────────────────────────────────────────────── */
+function exportCSV() {
+  if (!allLeads.length) { toast('No leads to export', 'err'); return; }
+  const cols = ['Date', 'First Name', 'Last Name', 'Phone', 'Email', 'Owns Home', 'Ad Name', 'Campaign'];
+  const rows = allLeads.map(l => {
+    const f = l.fields || {};
+    return [
+      new Date(l.created_at).toISOString(),
+      f.first_name || '', f.last_name || '',
+      f.phone_number || f.phone || '',
+      f.email || '',
+      f.home_ownership || '',
+      l.ad_name || '', l.campaign_name || '',
+    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+  });
+  const csv  = [cols.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `solar-surge-leads-${activeClient}-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast(`Exported ${allLeads.length} leads ✓`, 'ok');
+}
+
+/* ── Chart modal ──────────────────────────────────────────────────────────── */
+async function openChart(adId, name, angle) {
+  $('chart-ad-name').textContent = name;
+  $('chart-ad-meta').textContent = angle;
+  $('chart-stats').innerHTML = '';
+  $('chart-modal').classList.add('open');
+  const wrap = document.querySelector('.chart-wrap');
+  wrap.innerHTML = '<div class="empty"><div class="spinner"></div></div>';
+
+  try {
+    const res  = await fetch(`/api/history?ad_id=${adId}&days=${activeDays}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    wrap.innerHTML = '<canvas id="perf-chart"></canvas>';
+    renderChart(data, activeClient);
+    renderChartStats(data.totals);
+  } catch (err) {
+    wrap.innerHTML = `<div class="empty" style="color:var(--kill)">❌ ${err.message}</div>`;
+  }
+}
+
+function closeChart() {
+  $('chart-modal').classList.remove('open');
+  if (chartInst) { chartInst.destroy(); chartInst = null; }
+}
+
+function renderChart(data, client) {
+  if (chartInst) { chartInst.destroy(); chartInst = null; }
+  const color = client === 'sgs' ? '#3b82f6' : '#a855f7';
+  const ctx   = $('perf-chart').getContext('2d');
+  chartInst = new Chart(ctx, {
+    data: {
+      labels: data.history.map(h => h.date),
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Impressions',
+          data: data.history.map(h => h.impressions),
+          backgroundColor: color + '33',
+          borderColor: color + 'cc',
+          borderWidth: 1,
+          yAxisID: 'y',
+        },
+        {
+          type: 'line',
+          label: 'Leads',
+          data: data.history.map(h => h.leads),
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34,197,94,.08)',
+          borderWidth: 2.5,
+          pointRadius: 5,
+          pointBackgroundColor: '#22c55e',
+          tension: 0.35,
+          yAxisID: 'y1',
+        },
+        {
+          type: 'line',
+          label: 'Spend (£)',
+          data: data.history.map(h => h.spend),
+          borderColor: '#f97316',
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderDash: [4,3],
+          pointRadius: 3,
+          tension: 0.35,
+          yAxisID: 'y2',
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#9ca3af', font: { size: 11 } } },
+        tooltip: { callbacks: {
+          label: ctx => {
+            const label = ctx.dataset.label;
+            const v = ctx.raw;
+            if (label === 'Spend (£)') return ` Spend: £${v.toFixed(2)}`;
+            return ` ${label}: ${v.toLocaleString()}`;
+          }
+        }}
+      },
+      scales: {
+        x:  { ticks: { color:'#6b7280', font:{size:11} }, grid: { color:'#1c1c20' } },
+        y:  { type:'linear', position:'left',  ticks:{color:'#6b7280',font:{size:10}}, grid:{color:'#1c1c20'}, title:{display:true,text:'Impressions',color:'#6b7280',font:{size:10}} },
+        y1: { type:'linear', position:'right', ticks:{color:'#22c55e',font:{size:10}}, grid:{drawOnChartArea:false}, title:{display:true,text:'Leads',color:'#22c55e',font:{size:10}} },
+        y2: { type:'linear', position:'right', display:false },
+      },
+    },
+  });
+}
+
+function renderChartStats(t) {
+  $('chart-stats').innerHTML = [
+    ['Impressions', t.impressions.toLocaleString()],
+    ['Spend',       `£${t.spend.toFixed(2)}`],
+    ['Leads',       t.leads],
+    ['CPL',         t.cpl ? `£${t.cpl.toFixed(2)}` : '—'],
+    ['Avg CTR',     t.avg_ctr ? t.avg_ctr.toFixed(2)+'%' : '—'],
+  ].map(([l,v]) => `<div class="cs-item"><div class="cs-label">${l}</div><div class="cs-val">${v}</div></div>`).join('');
+}
+
+/* ── Modal close on overlay click ─────────────────────────────────────────── */
+$('chart-modal').addEventListener('click', e => {
+  if (e.target === $('chart-modal')) closeChart();
+});
+
+/* ── Init ─────────────────────────────────────────────────────────────────── */
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "note": "This file defines the Facebook Instant Form structure. The 'form_id' field will be populated by launcher.py after creation.",
+    "status": "PENDING_PRIVACY_POLICY_URL"
+  },
+  "form_config": {
+    "name": "Solar Surge — Free Qualification Check",
+    "form_type": "MORE_VOLUME",
+    "locale": "en_GB",
+    "intro": {
+      "headline": "Find Out If Your Home Qualifies For Free Solar",
+      "description": "Takes 30 seconds. No commitment. We'll tell you exactly what you qualify for."
+    },
+    "prefilled_fields": [
+      {
+        "key": "FIRST_NAME",
+        "label": "First Name",
+        "type": "PREFILL",
+        "source": "facebook_profile"
+      },
+      {
+        "key": "LAST_NAME",
+        "label": "Last Name",
+        "type": "PREFILL",
+        "source": "facebook_profile"
+      },
+      {
+        "key": "PHONE",
+        "label": "Phone Number",
+        "type": "PREFILL",
+        "source": "facebook_profile"
+      },
+      {
+        "key": "EMAIL",
+        "label": "Email Address",
+        "type": "PREFILL",
+        "source": "facebook_profile"
+      }
+    ],
+    "custom_questions": [
+      {
+        "key": "home_ownership",
+        "label": "Do you own your home?",
+        "type": "CUSTOM_MULTIPLE_CHOICE",
+        "options": [
+          "Yes, own it outright",
+          "Yes, I have a mortgage",
+          "No, I rent"
+        ]
+      }
+    ],
+    "thank_you_screen": {
+      "headline": "You're on the list!",
+      "description": "One of our solar advisors will call you within 24 hours to run through your free quote.",
+      "cta_button_text": "Visit Solar Surge on Facebook",
+      "cta_button_type": "VIEW_WEBSITE"
+    },
+    "privacy_policy": {
+      "url": "PLACEHOLDER — set PRIVACY_POLICY_URL in .env before creating form",
+      "link_text": "Privacy Policy"
+    },
+    "tracking_parameters": [
+      {
+        "key": "ad_name",
+        "value": "{{ad.name}}"
+      },
+      {
+        "key": "adset_name",
+        "value": "{{adset.name}}"
+      },
+      {
+        "key": "campaign_name",
+        "value": "{{campaign.name}}"
+      }
+    ]
+  },
+  "form_id": null
+}

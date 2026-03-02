@@ -1,0 +1,11 @@
+{
+  "meta": {
+    "client": "hes",
+    "note": "All created Facebook asset IDs are logged here by launcher.py.",
+    "last_updated": null
+  },
+  "campaign": {"id": null, "name": null, "status": null},
+  "ad_set": {"id": null, "name": null, "status": null},
+  "lead_form": {"id": null, "name": null},
+  "ads": []
+}

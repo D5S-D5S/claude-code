@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solar Surge — Ad Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #7d8590;
+      --accent: #f97316;
+      --scale: #22c55e;
+      --watch: #eab308;
+      --kill: #ef4444;
+      --pending: #6366f1;
+      --sgs: #3b82f6;    /* blue — Scotland */
+      --hes: #a855f7;    /* purple — Wales */
+      --radius: 10px;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── Header ── */
+    header { background: var(--surface); border-bottom: 1px solid var(--border);
+             padding: 14px 24px; display: flex; align-items: center; gap: 16px; }
+    header h1 { font-size: 17px; font-weight: 700; }
+    header .tagline { color: var(--muted); font-size: 12px; }
+    .paused-badge { margin-left: auto; background: rgba(125,133,144,.15); color: var(--muted);
+                    border: 1px solid var(--border); border-radius: 4px;
+                    font-size: 11px; font-weight: 700; padding: 3px 10px; }
+
+    main { padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+
+    /* ── Client tabs ── */
+    .client-tabs { display: flex; gap: 0; margin-bottom: 20px;
+                   border: 1px solid var(--border); border-radius: var(--radius);
+                   overflow: hidden; background: var(--surface); }
+    .tab { flex: 1; padding: 12px 20px; cursor: pointer; transition: background .15s;
+           border-right: 1px solid var(--border); font-size: 13px; font-weight: 600;
+           text-align: center; display: flex; flex-direction: column; gap: 3px; }
+    .tab:last-child { border-right: none; }
+    .tab .tab-key { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; }
+    .tab .tab-label { font-size: 13px; }
+    .tab .tab-meta { font-size: 11px; color: var(--muted); font-weight: 400; }
+    .tab.active.sgs { background: rgba(59,130,246,.12); border-bottom: 2px solid var(--sgs); }
+    .tab.active.hes { background: rgba(168,85,247,.12); border-bottom: 2px solid var(--hes); }
+    .tab:not(.active):hover { background: var(--surface2); }
+
+    /* ── Summary cards ── */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+             gap: 10px; margin-bottom: 18px; }
+    .card { background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 14px 16px; }
+    .card .label { font-size: 10px; color: var(--muted); text-transform: uppercase;
+                   letter-spacing: .5px; margin-bottom: 5px; }
+    .card .value { font-size: 24px; font-weight: 700; }
+    .card .sub    { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Config strip ── */
+    .config-strip { display: flex; gap: 16px; flex-wrap: wrap; padding: 10px 16px;
+                    background: var(--surface2); border: 1px solid var(--border);
+                    border-radius: 8px; margin-bottom: 16px; font-size: 12px; }
+    .config-item { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+    .config-item strong { color: var(--text); }
+
+    /* ── Recommendation banner ── */
+    .rec-banner { border: 1px solid var(--border); border-left-width: 4px;
+                  border-radius: var(--radius); padding: 12px 16px;
+                  margin-bottom: 18px; font-size: 13px; line-height: 1.6;
+                  background: var(--surface2); }
+    .rec-banner.sgs { border-left-color: var(--sgs); }
+    .rec-banner.hes { border-left-color: var(--hes); }
+    .rec-banner strong { color: var(--accent); }
+
+    /* ── Controls ── */
+    .controls { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+    .controls select, .controls button {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); border-radius: 6px; padding: 7px 12px; font-size: 12px; cursor: pointer; }
+    .controls button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    .controls button:hover { opacity: .85; }
+    #last-fetch { margin-left: auto; font-size: 11px; color: var(--muted); }
+
+    /* ── Ad grid ── */
+    .ad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+
+    .ad-card { background: var(--surface); border: 1px solid var(--border);
+               border-radius: var(--radius); overflow: hidden;
+               transition: box-shadow .2s, border-color .2s; }
+    .ad-card:hover { box-shadow: 0 0 0 1px var(--border), 0 8px 24px rgba(0,0,0,.4); }
+    .ad-card.verdict-scale { border-color: rgba(34,197,94,.3); }
+    .ad-card.verdict-kill  { border-color: rgba(239,68,68,.3); }
+
+    .ad-header { padding: 12px 14px 8px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .ad-name  { font-weight: 700; font-size: 13px; }
+    .ad-angle { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+
+    .verdict-badge { font-size: 11px; font-weight: 700; padding: 3px 9px;
+               border-radius: 20px; white-space: nowrap; flex-shrink: 0; margin-left: 8px; }
+    .verdict-badge.scale   { background: rgba(34,197,94,.15);  color: var(--scale); }
+    .verdict-badge.watch   { background: rgba(234,179,8,.15);  color: var(--watch); }
+    .verdict-badge.kill    { background: rgba(239,68,68,.15);  color: var(--kill);  }
+    .verdict-badge.pending { background: rgba(99,102,241,.15); color: var(--pending); }
+    .verdict-badge.error   { background: rgba(239,68,68,.1);   color: var(--kill);  }
+
+    .ad-metrics { display: grid; grid-template-columns: repeat(4, 1fr);
+                  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .metric { padding: 9px 10px; text-align: center; }
+    .metric:not(:last-child) { border-right: 1px solid var(--border); }
+    .metric .m-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
+    .metric .m-value { font-size: 17px; font-weight: 700; margin-top: 2px; }
+    .metric .m-value.good { color: var(--scale); }
+    .metric .m-value.warn { color: var(--watch); }
+    .metric .m-value.bad  { color: var(--kill);  }
+
+    .progress-bar { height: 2px; background: var(--border); margin: 3px 0 0; }
+    .progress-fill { height: 100%; background: var(--accent); transition: width .5s; }
+
+    .ad-copy { padding: 10px 14px; }
+    .ad-copy .hook { font-weight: 700; font-size: 12px; margin-bottom: 5px; line-height: 1.4;
+                     color: var(--text); }
+    .ad-copy .body { font-size: 11px; color: var(--muted); white-space: pre-line; line-height: 1.5; }
+    .ad-copy .cta  { margin-top: 7px; font-size: 11px; color: var(--accent); font-weight: 600; }
+
+    .ad-explanation { padding: 0 14px 10px; font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+    .ad-footer { padding: 8px 14px; border-top: 1px solid var(--border);
+                 display: flex; justify-content: space-between; align-items: center; }
+    .status-pill { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+    .status-pill.paused { background: rgba(125,133,144,.12); color: var(--muted); }
+    .status-pill.active { background: rgba(34,197,94,.12); color: var(--scale); }
+    .btn-history { font-size: 11px; color: var(--accent); background: none;
+                   border: none; cursor: pointer; }
+    .btn-history:hover { text-decoration: underline; }
+
+    /* ── Copy preview modal ── */
+    .copy-btn { font-size: 11px; color: var(--muted); background: none;
+                border: none; cursor: pointer; margin-left: 6px; }
+    .copy-btn:hover { color: var(--text); }
+
+    /* ── Chart modal ── */
+    .modal-overlay { display: none; position: fixed; inset: 0;
+                     background: rgba(0,0,0,.75); z-index: 100;
+                     align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border);
+             border-radius: var(--radius); width: 90vw; max-width: 740px;
+             padding: 22px; position: relative; }
+    .modal h2 { font-size: 15px; font-weight: 700; }
+    .modal .modal-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .modal .close { position: absolute; top: 14px; right: 14px;
+                    background: none; border: none; color: var(--muted);
+                    font-size: 20px; cursor: pointer; line-height: 1; }
+    .modal .close:hover { color: var(--text); }
+    #chart-area { margin-top: 18px; height: 260px; }
+
+    /* ── Loading state ── */
+    .loading { text-align: center; padding: 60px 0; color: var(--muted); font-size: 13px; }
+    .spinner { display: inline-block; width: 26px; height: 26px;
+               border: 3px solid var(--border); border-top-color: var(--accent);
+               border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 10px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Thresholds guide ── */
+    .thresholds { margin-top: 24px; background: var(--surface); border: 1px solid var(--border);
+                  border-radius: var(--radius); padding: 14px 18px; }
+    .thresholds h3 { font-size: 11px; font-weight: 700; margin-bottom: 10px;
+                     color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .threshold-row { display: flex; gap: 20px; flex-wrap: wrap; }
+    .tr-item { font-size: 11px; }
+    .tr-item span { font-weight: 700; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .ad-grid { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: repeat(2, 1fr); }
+      .client-tabs { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>☀️ Solar Surge — Ad Dashboard</h1>
+    <div class="tagline">Multi-client lead gen · UK solar · Bottom of funnel</div>
+  </div>
+  <div class="paused-badge">ALL PAUSED</div>
+</header>
+
+<main>
+
+  <!-- Client tabs -->
+  <div class="client-tabs" id="client-tabs">
+    <div class="tab active sgs" onclick="switchClient('sgs')" id="tab-sgs">
+      <div class="tab-key">SGS</div>
+      <div class="tab-label">Scotland</div>
+      <div class="tab-meta" id="tab-sgs-meta">Loading…</div>
+    </div>
+    <div class="tab hes" onclick="switchClient('hes')" id="tab-hes">
+      <div class="tab-key">HES</div>
+      <div class="tab-label">South Wales</div>
+      <div class="tab-meta" id="tab-hes-meta">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="cards">
+    <div class="card"><div class="label">Total Spend</div><div class="value" id="s-spend">—</div><div class="sub" id="s-days-label">last 7 days</div></div>
+    <div class="card"><div class="label">Total Leads</div><div class="value" id="s-leads">—</div></div>
+    <div class="card"><div class="label">Blended CPL</div><div class="value" id="s-cpl">—</div></div>
+    <div class="card"><div class="label">Ads Tracked</div><div class="value" id="s-count">—</div></div>
+    <div class="card"><div class="label">✅ Scale</div><div class="value" style="color:var(--scale)" id="s-scale">—</div></div>
+    <div class="card"><div class="label">⚠️ Watch</div><div class="value" style="color:var(--watch)" id="s-watch">—</div></div>
+    <div class="card"><div class="label">❌ Kill</div><div class="value" style="color:var(--kill)" id="s-kill">—</div></div>
+    <div class="card"><div class="label">⏳ Pending</div><div class="value" style="color:var(--pending)" id="s-pending">—</div></div>
+  </div>
+
+  <!-- Config strip -->
+  <div class="config-strip" id="config-strip"></div>
+
+  <!-- Recommendation -->
+  <div class="rec-banner sgs" id="rec-banner">
+    <strong>📋 Recommendation:</strong> <span id="rec-text">Loading…</span>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <label style="font-size:12px;color:var(--muted)">Range:</label>
+    <select id="days-select">
+      <option value="3">Last 3 days</option>
+      <option value="7" selected>Last 7 days</option>
+      <option value="14">Last 14 days</option>
+      <option value="30">Last 30 days</option>
+    </select>
+    <button class="primary" onclick="loadAds()">↻ Refresh</button>
+    <div id="last-fetch"></div>
+  </div>
+
+  <!-- Ad grid -->
+  <div id="ad-container">
+    <div class="loading"><div class="spinner"></div><br>Fetching ad performance…</div>
+  </div>
+
+  <!-- Thresholds -->
+  <div class="thresholds">
+    <h3>Decision Thresholds</h3>
+    <div class="threshold-row">
+      <div class="tr-item" style="color:var(--scale)">✅ SCALE: <span>CPL &lt; £8</span> AND <span>CTR &gt; 1.5%</span></div>
+      <div class="tr-item" style="color:var(--watch)">⚠️ WATCH: <span>CPL £8–£15</span> or <span>CTR 1–1.5%</span></div>
+      <div class="tr-item" style="color:var(--kill)">❌ KILL: <span>CPL &gt; £15</span> OR <span>CTR &lt; 1%</span> OR 500 imp + 0 leads</div>
+      <div class="tr-item" style="color:var(--muted)">⏳ Need 500 impressions for verdict</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Chart modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="close" onclick="closeModal()">✕</button>
+    <h2 id="modal-title"></h2>
+    <div class="modal-sub" id="modal-sub"></div>
+    <div id="chart-area"><canvas id="history-chart"></canvas></div>
+  </div>
+</div>
+
+<script>
+let activeClient = 'sgs';
+let chartInstance = null;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function verdictClass(v) {
+  if (v.includes('SCALE'))    return 'scale';
+  if (v.includes('WATCH'))    return 'watch';
+  if (v.includes('KILL'))     return 'kill';
+  if (v.includes('ERROR'))    return 'error';
+  return 'pending';
+}
+
+function metricClass(val, type) {
+  if (val === null || val === undefined) return '';
+  if (type === 'cpl') return val <= 8 ? 'good' : val <= 15 ? 'warn' : 'bad';
+  if (type === 'ctr') return val >= 1.5 ? 'good' : val >= 1.0 ? 'warn' : 'bad';
+  return '';
+}
+
+function clientColor(c) {
+  return c === 'sgs' ? 'var(--sgs)' : 'var(--hes)';
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchClient(client) {
+  activeClient = client;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tab-${client}`).classList.add('active');
+  document.querySelector('.rec-banner').className = `rec-banner ${client}`;
+  loadAds();
+}
+
+// ── Load client tabs metadata ─────────────────────────────────────────────────
+async function loadClientMeta() {
+  try {
+    const res = await fetch('/api/clients');
+    const data = await res.json();
+    for (const [key, info] of Object.entries(data)) {
+      const el = document.getElementById(`tab-${key}-meta`);
+      if (!el) continue;
+      if (info.error) { el.textContent = 'Error'; return; }
+      const postcodes = (info.postcode_areas || []).join(', ');
+      const finance = info.finance_available ? '✅ Finance' : '💵 Cash';
+      el.textContent = `${postcodes} · ${finance}`;
+    }
+  } catch {}
+}
+
+// ── Render ads ────────────────────────────────────────────────────────────────
+function renderAds(data) {
+  const ads = data.ads;
+  const color = clientColor(data.client);
+
+  // Summary
+  document.getElementById('s-spend').textContent   = `£${(data.totals.spend||0).toFixed(2)}`;
+  document.getElementById('s-leads').textContent   = data.totals.leads;
+  document.getElementById('s-cpl').textContent     = data.totals.cpl ? `£${data.totals.cpl.toFixed(2)}` : '—';
+  document.getElementById('s-count').textContent   = ads.length;
+  document.getElementById('s-scale').textContent   = ads.filter(a => a.verdict.includes('SCALE')).length;
+  document.getElementById('s-watch').textContent   = ads.filter(a => a.verdict.includes('WATCH')).length;
+  document.getElementById('s-kill').textContent    = ads.filter(a => a.verdict.includes('KILL')).length;
+  document.getElementById('s-pending').textContent = ads.filter(a => a.verdict.includes('GATHERING')).length;
+  document.getElementById('s-days-label').textContent = `last ${document.getElementById('days-select').value} days`;
+
+  // Config strip
+  const cfg = data.config || {};
+  const postcodes = (cfg.postcode_areas || []).join(', ');
+  document.getElementById('config-strip').innerHTML = `
+    <div class="config-item">📍 <strong>${postcodes}</strong></div>
+    <div class="config-item">💰 Finance: <strong>${cfg.finance_available ? '✅ Yes' : '❌ No'}</strong></div>
+    <div class="config-item">🏅 MCS: <strong>${cfg.mcs_certified ? '✅ Yes' : '❌ No'}</strong></div>
+    <div class="config-item">📦 Installs/mo: <strong>${cfg.installs_per_month || '—'}</strong></div>
+    <div class="config-item">🔢 Campaign: <strong>${data.campaign?.id || 'NOT CREATED'}</strong></div>
+  `;
+
+  // Recommendation
+  document.getElementById('rec-text').textContent = data.recommendation;
+  document.getElementById('last-fetch').textContent =
+    `Updated: ${new Date(data.fetched_at).toLocaleTimeString()}`;
+
+  const maxImp = Math.max(...ads.map(a => a.metrics.impressions), 1);
+
+  let html = '<div class="ad-grid">';
+  for (const ad of ads) {
+    const m = ad.metrics;
+    const vc = verdictClass(ad.verdict);
+    const statusClass = (ad.status || '').toLowerCase();
+    const bodyPreview = (ad.copy.body || '').slice(0, 160) + ((ad.copy.body || '').length > 160 ? '…' : '');
+
+    html += `
+    <div class="ad-card verdict-${vc}">
+      <div class="ad-header">
+        <div style="flex:1;min-width:0">
+          <div class="ad-name">${ad.name}</div>
+          <div class="ad-angle">${ad.angle}</div>
+        </div>
+        <div class="verdict-badge ${vc}">${ad.verdict}</div>
+      </div>
+
+      <div class="ad-metrics">
+        <div class="metric">
+          <div class="m-label">Impressions</div>
+          <div class="m-value">${(m.impressions||0).toLocaleString()}</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${Math.round((m.impressions/maxImp)*100)}%"></div></div>
+        </div>
+        <div class="metric">
+          <div class="m-label">CTR</div>
+          <div class="m-value ${metricClass(m.ctr,'ctr')}">${m.ctr != null ? m.ctr.toFixed(2)+'%' : '—'}</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Leads</div>
+          <div class="m-value">${m.leads||0}</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">CPL</div>
+          <div class="m-value ${metricClass(m.cpl,'cpl')}">${m.cpl != null ? '£'+m.cpl.toFixed(2) : '—'}</div>
+        </div>
+      </div>
+
+      <div class="ad-copy">
+        <div class="hook">"${ad.copy.hook || '—'}"</div>
+        <div class="body">${bodyPreview}</div>
+        <div class="cta">${ad.copy.cta || ''}</div>
+      </div>
+
+      <div class="ad-explanation">→ ${ad.explanation}</div>
+
+      <div class="ad-footer">
+        <span class="status-pill ${statusClass}">${ad.status||'PAUSED'}</span>
+        <span style="font-size:11px;color:var(--muted)">£${(m.spend||0).toFixed(2)} spent</span>
+        <button class="btn-history" onclick="openHistory('${ad.id}','${ad.name}','${ad.angle}','${data.client}')">7-day chart →</button>
+      </div>
+    </div>`;
+  }
+  html += '</div>';
+  document.getElementById('ad-container').innerHTML = html;
+}
+
+// ── Load ads ──────────────────────────────────────────────────────────────────
+async function loadAds() {
+  const days = document.getElementById('days-select').value;
+  document.getElementById('ad-container').innerHTML =
+    '<div class="loading"><div class="spinner"></div><br>Fetching from Facebook API…</div>';
+
+  try {
+    const res  = await fetch(`/api/ads/${activeClient}?days=${days}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    renderAds(data);
+  } catch (err) {
+    document.getElementById('ad-container').innerHTML =
+      `<div class="loading" style="color:var(--kill)">❌ ${err.message}</div>`;
+  }
+}
+
+// ── History chart ─────────────────────────────────────────────────────────────
+async function openHistory(adId, name, angle, client) {
+  document.getElementById('modal-title').textContent = name;
+  document.getElementById('modal-sub').textContent = angle;
+  document.getElementById('modal').classList.add('open');
+
+  try {
+    const res  = await fetch(`/api/ad/${adId}/history`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    renderChart(data.history, client);
+  } catch (err) {
+    document.getElementById('chart-area').innerHTML =
+      `<div style="color:var(--kill);padding:20px;font-size:13px">Error: ${err.message}</div>`;
+  }
+}
+
+function renderChart(history, client) {
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  const accentColor = client === 'sgs' ? '#3b82f6' : '#a855f7';
+  const ctx = document.getElementById('history-chart').getContext('2d');
+  chartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: history.map(h => h.date),
+      datasets: [
+        {
+          label: 'Impressions',
+          data: history.map(h => h.impressions),
+          backgroundColor: accentColor + '33',
+          borderColor: accentColor,
+          borderWidth: 1,
+          yAxisID: 'y',
+        },
+        {
+          label: 'Leads',
+          type: 'line',
+          data: history.map(h => h.leads),
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34,197,94,.1)',
+          borderWidth: 2,
+          pointRadius: 4,
+          tension: 0.3,
+          yAxisID: 'y1',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#e6edf3', font: { size: 11 } } },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        x: { ticks: { color: '#7d8590', font: { size: 11 } }, grid: { color: '#21262d' } },
+        y: {
+          type: 'linear', position: 'left',
+          ticks: { color: '#7d8590', font: { size: 11 } }, grid: { color: '#21262d' },
+          title: { display: true, text: 'Impressions', color: '#7d8590', font: { size: 11 } }
+        },
+        y1: {
+          type: 'linear', position: 'right',
+          ticks: { color: '#22c55e', font: { size: 11 } }, grid: { drawOnChartArea: false },
+          title: { display: true, text: 'Leads', color: '#22c55e', font: { size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+}
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+document.getElementById('days-select').addEventListener('change', loadAds);
+
+// Init
+loadClientMeta();
+loadAds();
+</script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+facebook-business==17.0.4
+python-dotenv==1.0.1
+flask==3.0.3
+flask-cors==4.0.1
