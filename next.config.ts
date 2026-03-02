@@ -7,9 +7,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
     ],
   },
-  experimental: {
-    turbopackUseSystemTlsCerts: true,
-  },
 };
 
 export default nextConfig;

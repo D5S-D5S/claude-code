@@ -12,7 +12,7 @@
 }
 
 body {
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: 'Inter Variable', system-ui, sans-serif;
   background-color: #F8F9FA;
   color: #111827;
 }
