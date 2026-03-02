@@ -15,6 +15,7 @@ import {
   LogOut,
   ChevronRight,
   Globe,
+  ShieldCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Profile } from "@/types";
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { href: "/payments", label: "Payments", icon: CreditCard },
   { href: "/ai-tools", label: "AI Tools", icon: Sparkles, isPro: true },
   { href: "/settings/storefront", label: "Storefront", icon: Globe },
+  { href: "/admin", label: "Admin", icon: ShieldCheck },
 ];
 
 export default function Sidebar({ profile }: { profile: Profile | null }) {

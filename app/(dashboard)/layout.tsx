@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Sidebar from "@/components/layout/Sidebar";
 import { Profile } from "@/types";
@@ -8,25 +7,22 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
+  // Auth disabled — allow unauthenticated access
+  let profile: Profile | null = null;
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+      profile = data as Profile | null;
+    }
+  } catch {
+    // Supabase not configured — continue with null profile
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar profile={profile as Profile | null} />
+      <Sidebar profile={profile} />
       <main className="flex-1 overflow-y-auto">
         {children}
       </main>
