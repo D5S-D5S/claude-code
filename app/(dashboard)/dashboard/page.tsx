@@ -18,7 +18,8 @@ import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user && process.env.NEXT_PUBLIC_SUPABASE_URL) redirect("/login");
+  const userId = user?.id ?? "";
 
   const [
     { data: profile },
@@ -27,28 +28,28 @@ export default async function DashboardPage() {
     { data: jobs },
     { data: inventory },
   ] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).single(),
+    supabase.from("profiles").select("*").eq("id", userId).single(),
     supabase
       .from("quotes")
       .select("*, customer:customers(name)", { count: "exact" })
-      .eq("profile_id", user.id)
+      .eq("profile_id", userId)
       .order("created_at", { ascending: false })
       .limit(5),
     supabase
       .from("customers")
       .select("*", { count: "exact" })
-      .eq("profile_id", user.id),
+      .eq("profile_id", userId),
     supabase
       .from("jobs")
       .select("*, customer:customers(name)")
-      .eq("profile_id", user.id)
+      .eq("profile_id", userId)
       .eq("status", "scheduled")
       .order("scheduled_date", { ascending: true })
       .limit(5),
     supabase
       .from("inventory")
       .select("*")
-      .eq("profile_id", user.id)
+      .eq("profile_id", userId)
       .filter("quantity_in_stock", "lte", "low_stock_threshold"),
   ]);
 
@@ -59,7 +60,7 @@ export default async function DashboardPage() {
   const { data: paidQuotes } = await supabase
     .from("quotes")
     .select("total")
-    .eq("profile_id", user.id)
+    .eq("profile_id", userId)
     .eq("payment_status", "paid");
 
   const totalRevenue = paidQuotes?.reduce((sum, q) => sum + (q.total || 0), 0) || 0;

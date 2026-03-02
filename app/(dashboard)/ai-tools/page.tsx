@@ -8,12 +8,13 @@ import Link from "next/link";
 export default async function AIToolsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user && process.env.NEXT_PUBLIC_SUPABASE_URL) redirect("/login");
+  const userId = user?.id ?? "";
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("plan, currency, currency_symbol")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
 
   const isPro = profile?.plan === "pro" || profile?.plan === "enterprise";

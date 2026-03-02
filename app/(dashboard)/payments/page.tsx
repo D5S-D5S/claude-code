@@ -14,18 +14,19 @@ import { formatCurrency } from "@/lib/utils";
 export default async function PaymentsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user && process.env.NEXT_PUBLIC_SUPABASE_URL) redirect("/login");
+  const userId = user?.id ?? "";
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
 
   const { data: paidQuotes } = await supabase
     .from("quotes")
     .select("total, paid_at")
-    .eq("profile_id", user.id)
+    .eq("profile_id", userId)
     .eq("payment_status", "paid");
 
   const totalRevenue = paidQuotes?.reduce((sum, q) => sum + (q.total || 0), 0) || 0;
@@ -41,7 +42,7 @@ export default async function PaymentsPage() {
   const platformEarnings = (totalRevenue * platformFee) / 100;
 
   const stripeConnected = profile?.stripe_connected || false;
-  const connectUrl = `/api/stripe/connect?user_id=${user.id}`;
+  const connectUrl = `/api/stripe/connect?user_id=${userId}`;
 
   return (
     <div className="p-8">

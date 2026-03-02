@@ -5,7 +5,8 @@ import QuoteBuilder from "@/components/quotes/QuoteBuilder";
 export default async function NewQuotePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user && process.env.NEXT_PUBLIC_SUPABASE_URL) redirect("/login");
+  const userId = user?.id ?? "";
 
   const [
     { data: profile },
@@ -14,27 +15,27 @@ export default async function NewQuotePage() {
     { data: packages },
     { data: addons },
   ] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).single(),
+    supabase.from("profiles").select("*").eq("id", userId).single(),
     supabase
       .from("pricing_tiers")
       .select("*")
-      .eq("profile_id", user.id)
+      .eq("profile_id", userId)
       .eq("is_active", true)
       .order("tier_number"),
     supabase
       .from("customers")
       .select("id, name, email, phone")
-      .eq("profile_id", user.id)
+      .eq("profile_id", userId)
       .order("name"),
     supabase
       .from("packages")
       .select("*")
-      .eq("profile_id", user.id)
+      .eq("profile_id", userId)
       .eq("is_active", true),
     supabase
       .from("addons")
       .select("*")
-      .eq("profile_id", user.id)
+      .eq("profile_id", userId)
       .eq("is_active", true),
   ]);
 

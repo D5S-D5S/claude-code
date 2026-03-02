@@ -7,14 +7,15 @@ import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 export default async function QuotesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user && process.env.NEXT_PUBLIC_SUPABASE_URL) redirect("/login");
+  const userId = user?.id ?? "";
 
   const [{ data: profile }, { data: quotes }] = await Promise.all([
-    supabase.from("profiles").select("currency, currency_symbol").eq("id", user.id).single(),
+    supabase.from("profiles").select("currency, currency_symbol").eq("id", userId).single(),
     supabase
       .from("quotes")
       .select("*, customer:customers(name, email)")
-      .eq("profile_id", user.id)
+      .eq("profile_id", userId)
       .order("created_at", { ascending: false }),
   ]);
 

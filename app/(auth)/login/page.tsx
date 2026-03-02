@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
+const PREVIEW_MODE = !process.env.NEXT_PUBLIC_SUPABASE_URL;
+
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -66,6 +68,21 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome back</h1>
           <p className="text-gray-500 text-sm mb-6">Sign in to your account</p>
+
+          {PREVIEW_MODE && (
+            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-5 text-center">
+              <p className="text-sm font-semibold text-orange-800 mb-1">Preview Mode</p>
+              <p className="text-xs text-orange-600 mb-3">
+                Supabase is not configured. You can browse the UI without signing in.
+              </p>
+              <Link
+                href="/dashboard"
+                className="inline-block bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl px-4 py-2 transition-all"
+              >
+                View Dashboard →
+              </Link>
+            </div>
+          )}
 
           {error && (
             <div className="bg-red-50 text-red-700 text-sm rounded-lg p-3 mb-4 border border-red-100">

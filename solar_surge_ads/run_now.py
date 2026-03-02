@@ -19,7 +19,7 @@ What it does (all in order):
   8. Logs every asset ID to clients/sgs/launched_ads.json + clients/hes/launched_ads.json
   9. Prints full summary
 
-Everything is created PAUSED — nothing spends until you activate in Ads Manager.
+Everything is created ACTIVE — campaigns start spending immediately.
 """
 
 import json
@@ -104,12 +104,12 @@ def create_campaign_structure(client):
     d = fb_post(f"{ACCOUNT_ID}/campaigns", {
         "name": camp_name,
         "objective": "OUTCOME_LEADS",
-        "status": "PAUSED",
+        "status": "ACTIVE",
         "special_ad_categories": "[]",
     })
     camp_id = d["id"]
     ok(f"Campaign created: {camp_id} — {camp_name}")
-    update_launched(client, "campaign", {"id": camp_id, "name": camp_name, "status": "PAUSED"})
+    update_launched(client, "campaign", {"id": camp_id, "name": camp_name, "status": "ACTIVE"})
 
     # --- Ad set ---
     # Build location targeting based on client
@@ -143,13 +143,13 @@ def create_campaign_structure(client):
         "billing_event": "IMPRESSIONS",
         "optimization_goal": "LEAD_GENERATION",
         "bid_strategy": "LOWEST_COST_WITHOUT_CAP",
-        "status": "PAUSED",
+        "status": "ACTIVE",
         "targeting": targeting,
         "promoted_object": json.dumps({"page_id": PAGE_ID}),
     })
     adset_id = adset["id"]
     ok(f"Ad set created: {adset_id} — {cfg['ad_set']['name']}")
-    update_launched(client, "ad_set", {"id": adset_id, "name": cfg["ad_set"]["name"], "status": "PAUSED"})
+    update_launched(client, "ad_set", {"id": adset_id, "name": cfg["ad_set"]["name"], "status": "ACTIVE"})
 
 # ── Step 4 & 5: Create lead forms ─────────────────────────────────────────
 def create_form(client):
@@ -246,7 +246,7 @@ def create_ads(client):
             "name": ad_copy["name_tag"],
             "adset_id": adset_id,
             "creative": json.dumps({"creative_id": creative_id}),
-            "status": "PAUSED",
+            "status": "ACTIVE",
         })
         ad_id = ad["id"]
         ok(f"Ad created: {ad_id} — {ad_copy['name_tag']}")
@@ -255,7 +255,7 @@ def create_ads(client):
             "name":       ad_copy["name_tag"],
             "creative_id": creative_id,
             "angle":      ad_copy["angle"],
-            "status":     "PAUSED"
+            "status":     "ACTIVE"
         })
 
 # ── Step 8: Summary ────────────────────────────────────────────────────────
@@ -272,9 +272,9 @@ def print_summary():
         for ad in d["ads"]:
             print(f"      • [{ad['status']}] {ad['name']} ({ad['id']})")
     print(f"""
-  ⚠️  ALL ASSETS ARE PAUSED.
-  To activate: go to Facebook Ads Manager → find campaigns starting with SGS / HES → turn on.
-  Or use the Netlify dashboard to enable individual ads.
+  ✅  ALL ASSETS ARE ACTIVE and spending.
+  View at: https://business.facebook.com/adsmanager → switch to account act_601150485509219
+  Use the Netlify dashboard to pause/enable individual ads.
 """)
 
 # ── Main ───────────────────────────────────────────────────────────────────
