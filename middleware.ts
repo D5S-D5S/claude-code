@@ -52,9 +52,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/settings");
 
   if (!user && isDashboardRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+    // Auth guard temporarily disabled — allow unauthenticated access
+    // return NextResponse.redirect(url);
   }
 
   if (user && isAuthRoute) {
