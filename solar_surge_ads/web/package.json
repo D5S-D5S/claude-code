@@ -1,0 +1,7 @@
+{
+  "name": "solar-surge-dashboard",
+  "version": "1.0.0",
+  "description": "Solar Surge Facebook Ads management dashboard — hosted on Netlify",
+  "engines": { "node": ">=20" },
+  "dependencies": {}
+}

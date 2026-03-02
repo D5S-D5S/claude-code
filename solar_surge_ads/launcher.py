@@ -15,13 +15,15 @@ Commands:
   show-copy         Print all 5 ad copy variations for the client
   show-form         Print lead form structure for the client
   create-form       Create the lead form (requires PRIVACY_POLICY_URL in .env)
-  create-campaign   Build campaign + ad set + 5 ads (all PAUSED)
+  create-campaign   Build campaign + ad set (PAUSED) — no form required
+  create-ads        Add 5 ads to existing campaign (requires form_id)
   summary           Print full summary of created assets for the client
 
 Examples:
   python launcher.py test
-  python launcher.py --client sgs show-copy
-  python launcher.py --client hes create-campaign
+  python launcher.py --client sgs create-campaign    # creates structure, PAUSED
+  python launcher.py --client sgs create-form        # after privacy policy URL is live
+  python launcher.py --client sgs create-ads         # after form is created
   python launcher.py --client sgs summary
 """
 
@@ -279,17 +281,18 @@ def cmd_create_form(client: str):
 
 
 def cmd_create_campaign(client: str):
-    launched = load_json(client_path(client, "launched_ads.json"))
-    form_id = launched["lead_form"].get("id")
-    if not form_id:
-        print(f"\n  ❌ No form_id found for [{client.upper()}]. Run create-form first.\n")
-        sys.exit(1)
-
+    """Phase 1 — Create campaign + ad set (PAUSED). No form required."""
     cfg = load_json(client_path(client, "campaign_config.json"))
-    copy_bank = load_json(client_path(client, "copy_bank.json"))
     account = init_api()
     today = datetime.utcnow().strftime("%Y-%m-%d")
     campaign_name = cfg["campaign"]["name"].replace("{DATE}", today)
+
+    # Guard: don't create a duplicate campaign
+    launched = load_json(client_path(client, "launched_ads.json"))
+    if launched["campaign"].get("id"):
+        print(f"\n  ⚠️  Campaign already exists for [{client.upper()}]: {launched['campaign']['id']}")
+        print(f"  Run: python launcher.py --client {client} summary\n")
+        return
 
     print(f"\n🚀 [{client.upper()}] Creating CAMPAIGN (PAUSED)…")
     campaign = account.create_campaign(params={
@@ -319,6 +322,31 @@ def cmd_create_campaign(client: str):
     adset_id = ad_set["id"]
     print(f"  ✅ Ad set: {adset_id} — {cfg['ad_set']['name']}")
     update_launched(client, "ad_set", {"id": adset_id, "name": cfg["ad_set"]["name"], "status": "PAUSED"})
+
+    print(f"\n  ✅ [{client.upper()}] Campaign structure saved (PAUSED).")
+    print(f"  Next: create privacy policy page, then run:")
+    print(f"    python launcher.py --client {client} create-form")
+    print(f"    python launcher.py --client {client} create-ads\n")
+
+
+def cmd_create_ads(client: str):
+    """Phase 2 — Create 5 ads (PAUSED). Requires form_id from create-form."""
+    launched = load_json(client_path(client, "launched_ads.json"))
+    form_id = launched["lead_form"].get("id")
+    adset_id = launched["ad_set"].get("id")
+
+    if not form_id:
+        print(f"\n  ❌ No form_id for [{client.upper()}]. Run create-form first.\n")
+        sys.exit(1)
+    if not adset_id:
+        print(f"\n  ❌ No ad_set_id for [{client.upper()}]. Run create-campaign first.\n")
+        sys.exit(1)
+    if launched["ads"]:
+        print(f"\n  ⚠️  {len(launched['ads'])} ads already exist for [{client.upper()}]. Skipping.\n")
+        return
+
+    copy_bank = load_json(client_path(client, "copy_bank.json"))
+    account = init_api()
 
     print(f"\n🎨 [{client.upper()}] Creating 5 ADS (all PAUSED)…")
     for ad_copy in copy_bank["ads"]:
@@ -353,7 +381,7 @@ def cmd_create_campaign(client: str):
             "status": "PAUSED"
         })
 
-    print(f"\n  ✅ [{client.upper()}] All assets created. Nothing is live.")
+    print(f"\n  ✅ [{client.upper()}] All 5 ads created. Nothing is live.")
     print(f"  Run: python launcher.py --client {client} summary\n")
 
 
@@ -395,6 +423,7 @@ CLIENT_COMMANDS = {
     "show-form": cmd_show_form,
     "create-form": cmd_create_form,
     "create-campaign": cmd_create_campaign,
+    "create-ads": cmd_create_ads,
     "summary": cmd_summary,
 }
 
