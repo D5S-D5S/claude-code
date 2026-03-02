@@ -1,0 +1,48 @@
+{
+  "client": "hes",
+  "client_label": "Client 2 — South Wales",
+  "generated_at": "2026-03-02",
+  "strategy": "Bottom-of-funnel. South Wales homeowners already aware of solar. Angles: finance = £0 upfront, month-one savings, property value ROI, MCS trust, energy independence. Finance available is the #1 differentiator — lean into it hard.",
+  "ads": [
+    {
+      "id": "HES_BF_FinanceDay1",
+      "angle": "Finance — saving from day one before you pay a penny",
+      "hook": "What if your solar panels saved you money before you spent any?",
+      "body": "With finance, your monthly repayment is typically less than what you currently pay for electricity.\n\nDay one. Before you've written a cheque. Before you've paid a penny of your own money.\n\nMCS certified installation. South Wales survey. Free, no obligation, no hard sell.\n\nRun your numbers in 30 seconds.",
+      "cta": "👉 See What You'd Save From Month One — Free Quote",
+      "name_tag": "HES_BF_FinanceDay1"
+    },
+    {
+      "id": "HES_BF_ZeroUpfront",
+      "angle": "Finance — zero upfront barrier removal",
+      "hook": "Solar with £0 upfront. No savings needed. No cash required. Here's how South Wales homeowners are doing it.",
+      "body": "Finance changes the maths completely.\n\nYou don't need savings. You don't need a lump sum. You just need to own your home.\n\nThe panels go on. The bills come down. The repayments come out — and in most cases, the net cost is less than what you were already paying.\n\nMCS certified. Free survey. We'll show you your exact numbers.",
+      "cta": "👉 Check If You Qualify — Takes 30 Seconds",
+      "name_tag": "HES_BF_ZeroUpfront"
+    },
+    {
+      "id": "HES_BF_WalesBills",
+      "angle": "Welsh energy bills — make inaction feel expensive",
+      "hook": "The average South Wales household spends £1,800+ a year on electricity. Solar makes that number optional.",
+      "body": "Cardiff. Swansea. Newport. Across South Wales, homeowners are watching their energy bills disappear — while their neighbours are still paying full rate.\n\nSolar is no longer a luxury. With finance available and MCS certification, it's the most logical home upgrade you can make.\n\nFree survey. Zero obligation. We'll tell you exactly what your roof qualifies for.",
+      "cta": "👉 Get Your Free Assessment — No Commitment Needed",
+      "name_tag": "HES_BF_WalesBills"
+    },
+    {
+      "id": "HES_BF_PropertyROI",
+      "angle": "Property value ROI — finance makes it extraordinary",
+      "hook": "Solar adds an average of £30,000 to UK property values. With finance, your upfront cost is £0. Do that maths.",
+      "body": "You spend nothing. Your home gains a certified solar system. Your EPC rating improves. Your property value rises.\n\nAnd every month, your electricity bill is lower — often enough to cover the finance repayment entirely.\n\nThis is what a smart home investment looks like in 2026.\n\nMCS certified. Free survey. South Wales specialist.",
+      "cta": "👉 Find Out What Your Home Qualifies For →",
+      "name_tag": "HES_BF_PropertyROI"
+    },
+    {
+      "id": "HES_BF_FinanceObjection",
+      "angle": "Finance objection killer — remove every excuse",
+      "hook": "\"I can't afford solar.\" That's not true anymore — and here's why.",
+      "body": "Finance means the barrier isn't cash. It's just decision.\n\nYou own your home. That's all you need.\n\nWe handle everything: free survey, MCS certified installation, finance arranged. You start saving from month one.\n\nIf you've been putting this off because of cost — that reason is gone.\n\nTake 30 seconds. Find out what you qualify for.",
+      "cta": "👉 Remove the Barrier — Check Eligibility Free",
+      "name_tag": "HES_BF_FinanceObjection"
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "client": "hes",
+  "client_label": "Client 2 — South Wales",
+  "contact": {
+    "name": "James Davies",
+    "email": "jamesheswales@outlook.com"
+  },
+  "campaign": {
+    "name": "HES — Solar Lead Gen — BF — {DATE}",
+    "objective": "LEAD_GENERATION",
+    "status": "PAUSED",
+    "special_ad_categories": [],
+    "daily_budget_pence": 1000,
+    "note": "£10/day campaign-level budget split across 5 ads (~£2/ad/day)"
+  },
+  "ad_set": {
+    "name": "HES — South Wales Homeowners — 35-65+ — Broad",
+    "optimization_goal": "LEAD_GENERATION",
+    "billing_event": "IMPRESSIONS",
+    "bid_strategy": "LOWEST_COST_WITHOUT_CAP",
+    "targeting": {
+      "geo_locations": {
+        "countries": ["GB"],
+        "cities": [
+          {"key": "Swansea", "name": "Swansea, Wales", "region": "Wales", "country": "GB"},
+          {"key": "Cardiff", "name": "Cardiff, Wales", "region": "Wales", "country": "GB"},
+          {"key": "Newport", "name": "Newport, Wales", "region": "Wales", "country": "GB"},
+          {"key": "Bridgend", "name": "Bridgend, Wales", "region": "Wales", "country": "GB"},
+          {"key": "Neath", "name": "Neath, Wales", "region": "Wales", "country": "GB"},
+          {"key": "Port Talbot", "name": "Port Talbot, Wales", "region": "Wales", "country": "GB"},
+          {"key": "Barry", "name": "Barry, Wales", "region": "Wales", "country": "GB"},
+          {"key": "Pontypridd", "name": "Pontypridd, Wales", "region": "Wales", "country": "GB"},
+          {"key": "Caerphilly", "name": "Caerphilly, Wales", "region": "Wales", "country": "GB"},
+          {"key": "Rhondda", "name": "Rhondda, Wales", "region": "Wales", "country": "GB"},
+          {"key": "Llanelli", "name": "Llanelli, Wales", "region": "Wales", "country": "GB"},
+          {"key": "Cwmbran", "name": "Cwmbran, Wales", "region": "Wales", "country": "GB"}
+        ],
+        "location_types": ["home", "recent"]
+      },
+      "age_min": 35,
+      "age_max": 65,
+      "publisher_platforms": ["facebook", "instagram"],
+      "facebook_positions": ["feed"],
+      "instagram_positions": ["stream"],
+      "device_platforms": ["mobile", "desktop"],
+      "flexible_spec": [
+        {
+          "interests": [
+            {"name": "Home improvement"},
+            {"name": "Renewable energy"},
+            {"name": "Energy conservation"},
+            {"name": "Solar energy"},
+            {"name": "Homeowners"},
+            {"name": "Energy efficiency"}
+          ]
+        }
+      ]
+    }
+  },
+  "lead_form": {
+    "name": "HES — South Wales Solar — Free Home Assessment",
+    "form_type": "MORE_VOLUME",
+    "locale": "en_GB",
+    "intro": {
+      "headline": "Find Out If Your Home Qualifies For Free Solar",
+      "description": "Takes 30 seconds. No commitment. We'll tell you exactly what you qualify for."
+    },
+    "thank_you": {
+      "headline": "You're on the list!",
+      "description": "One of our solar advisors will call you within 24 hours to run through your free quote.",
+      "cta_text": "Visit Us on Facebook"
+    }
+  },
+  "postcode_areas": ["SA", "CF", "NP"],
+  "system_size_kwh": 5,
+  "finance_available": true,
+  "mcs_certified": true,
+  "installs_per_month": 20
+}

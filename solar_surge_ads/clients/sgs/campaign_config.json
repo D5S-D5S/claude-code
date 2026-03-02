@@ -1,0 +1,79 @@
+{
+  "client": "sgs",
+  "client_label": "Client 1 — Scotland",
+  "contact": {
+    "name": "Simon Flynn",
+    "email": "simondflynn@yahoo.co.uk"
+  },
+  "campaign": {
+    "name": "SGS — Solar Lead Gen — BF — {DATE}",
+    "objective": "LEAD_GENERATION",
+    "status": "PAUSED",
+    "special_ad_categories": [],
+    "daily_budget_pence": 1000,
+    "note": "£10/day campaign-level budget split across 5 ads (~£2/ad/day)"
+  },
+  "ad_set": {
+    "name": "SGS — Scotland Homeowners — 35-65+ — Broad",
+    "optimization_goal": "LEAD_GENERATION",
+    "billing_event": "IMPRESSIONS",
+    "bid_strategy": "LOWEST_COST_WITHOUT_CAP",
+    "targeting": {
+      "geo_locations": {
+        "countries": ["GB"],
+        "cities": [
+          {"key": "Glasgow", "name": "Glasgow, Scotland", "region": "Scotland", "country": "GB"},
+          {"key": "Edinburgh", "name": "Edinburgh, Scotland", "region": "Scotland", "country": "GB"},
+          {"key": "Aberdeen", "name": "Aberdeen, Scotland", "region": "Scotland", "country": "GB"},
+          {"key": "Dundee", "name": "Dundee, Scotland", "region": "Scotland", "country": "GB"},
+          {"key": "Perth", "name": "Perth, Scotland", "region": "Scotland", "country": "GB"},
+          {"key": "Stirling", "name": "Stirling, Scotland", "region": "Scotland", "country": "GB"},
+          {"key": "Kirkcaldy", "name": "Kirkcaldy, Scotland", "region": "Scotland", "country": "GB"},
+          {"key": "Motherwell", "name": "Motherwell, Scotland", "region": "Scotland", "country": "GB"},
+          {"key": "Falkirk", "name": "Falkirk, Scotland", "region": "Scotland", "country": "GB"},
+          {"key": "Livingston", "name": "Livingston, Scotland", "region": "Scotland", "country": "GB"},
+          {"key": "Paisley", "name": "Paisley, Scotland", "region": "Scotland", "country": "GB"},
+          {"key": "Hamilton", "name": "Hamilton, Scotland", "region": "Scotland", "country": "GB"}
+        ],
+        "location_types": ["home", "recent"]
+      },
+      "age_min": 35,
+      "age_max": 65,
+      "publisher_platforms": ["facebook", "instagram"],
+      "facebook_positions": ["feed"],
+      "instagram_positions": ["stream"],
+      "device_platforms": ["mobile", "desktop"],
+      "flexible_spec": [
+        {
+          "interests": [
+            {"name": "Home improvement"},
+            {"name": "Renewable energy"},
+            {"name": "Energy conservation"},
+            {"name": "Solar energy"},
+            {"name": "Homeowners"},
+            {"name": "Energy efficiency"}
+          ]
+        }
+      ]
+    }
+  },
+  "lead_form": {
+    "name": "SGS — Scotland Solar — Free Home Assessment",
+    "form_type": "MORE_VOLUME",
+    "locale": "en_GB",
+    "intro": {
+      "headline": "Find Out If Your Home Qualifies For Free Solar",
+      "description": "Takes 30 seconds. No commitment. We'll tell you exactly what you qualify for."
+    },
+    "thank_you": {
+      "headline": "You're on the list!",
+      "description": "One of our solar advisors will call you within 24 hours to run through your free quote.",
+      "cta_text": "Visit Us on Facebook"
+    }
+  },
+  "postcode_areas": ["AB", "DD", "PH", "FK", "KY", "G", "EH", "ML"],
+  "system_size_kw": 10,
+  "finance_available": false,
+  "mcs_certified": true,
+  "installs_per_month": 10
+}

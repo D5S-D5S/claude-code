@@ -1,0 +1,48 @@
+{
+  "client": "sgs",
+  "client_label": "Client 1 — Scotland",
+  "generated_at": "2026-03-02",
+  "strategy": "Bottom-of-funnel. Scottish homeowners already aware of solar. Angles: premium 10kW system size, MCS trust, energy independence, debunking Scottish weather myth, own-it-outright (no finance).",
+  "ads": [
+    {
+      "id": "SGS_BF_Premium10kW",
+      "angle": "Premium System Size — 10kW vs industry average 4kW",
+      "hook": "Most solar installers quote you 4kW. That covers less than half your home. Here's what a full system actually looks like.",
+      "body": "The UK average solar install is 4kW — enough to shave your bill, not eliminate it.\n\nA 10kW system is a different proposition entirely. More generation. Faster payback. Higher export earnings. And an EPC rating that jumps on your property report.\n\nMCS certified survey. Free. No obligation. We'll show you the numbers for your specific roof.",
+      "cta": "👉 Book Your Free 10kW Assessment — No Commitment",
+      "name_tag": "SGS_BF_Premium10kW"
+    },
+    {
+      "id": "SGS_BF_ScottishWeather",
+      "angle": "Myth-bust — Scottish weather objection killer",
+      "hook": "\"But Scotland's too cloudy for solar.\" We hear this every week. And it's costing homeowners thousands.",
+      "body": "Solar panels generate from daylight — not direct sunshine. Even on an overcast Scottish day, your panels are working.\n\nOver 100,000 Scottish homes already run on solar. Aberdeen. Edinburgh. Glasgow. Dundee.\n\nThe ones who said it wouldn't work? Still paying full price every month.\n\nMCS certified. Free survey. Let us show you what your roof actually generates.",
+      "cta": "👉 Get Your Free Generation Estimate — Takes 30 Seconds",
+      "name_tag": "SGS_BF_ScottishWeather"
+    },
+    {
+      "id": "SGS_BF_OwnItOutright",
+      "angle": "Own it outright — no rental, no lease, no middleman",
+      "hook": "Own your home. Own your energy. Stop renting your electricity forever.",
+      "body": "Leased panels and energy rental schemes mean you never own the asset on your roof.\n\nBuy outright. It's on your property register. It raises your EPC. It adds directly to your home's value.\n\nAnd after the payback period? You're generating free electricity. Indefinitely.\n\nMCS certified install. Free survey. No hard sell — just honest numbers.",
+      "cta": "👉 Find Out What Owning Your Own System Looks Like",
+      "name_tag": "SGS_BF_OwnItOutright"
+    },
+    {
+      "id": "SGS_BF_WinterBills",
+      "angle": "Energy bill spike — Scottish winter angle",
+      "hook": "Scottish energy bills spike every winter. Homeowners with solar watch it happen to everyone else.",
+      "body": "January bills. February bills. Standing charges going up again.\n\nEvery winter is another reminder that your electricity company sets the price — and you just pay it.\n\nSolar owners opted out of that system. Their panels generate in summer, export earnings credit winter months, and every year it gets better.\n\nFree survey. 10kW system. MCS certified. Find out what your home qualifies for.",
+      "cta": "👉 Get Your Free Quote — Protect Against Next Winter's Bills",
+      "name_tag": "SGS_BF_WinterBills"
+    },
+    {
+      "id": "SGS_BF_MCSTrust",
+      "angle": "MCS certification — quality and Government compliance trust signal",
+      "hook": "Before you let anyone put panels on your roof — ask if they're MCS certified. Here's why it matters.",
+      "body": "MCS is the UK Government's standard for solar installation quality. Without it, you can't claim Smart Export Guarantee payments. Without it, your install may not meet building regulations.\n\nNot all installers carry MCS certification. Ours do.\n\nFree survey. Certified from day one. Full documentation for your property records.\n\nIf you're a homeowner in Scotland, find out what you qualify for in 30 seconds.",
+      "cta": "👉 Book Your Free MCS-Certified Survey →",
+      "name_tag": "SGS_BF_MCSTrust"
+    }
+  ]
+}
