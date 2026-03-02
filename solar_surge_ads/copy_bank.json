@@ -1,0 +1,46 @@
+{
+  "generated_at": "2026-03-02",
+  "strategy": "Bottom of funnel — Stages 4 & 5 awareness. Audience has already seen solar ads. Goal: make them act NOW.",
+  "ads": [
+    {
+      "id": "SS_BF_PriceUrgency",
+      "angle": "Price Urgency + Specific Offer",
+      "hook": "Energy bills are going up again in April. Your neighbours already locked in free solar.",
+      "body": "Install slots in your area are filling fast — and once they're gone, you're back to paying full price every month.\n\nThe government scheme covering installation costs won't be around forever.\n\nTake 30 seconds to find out if your home qualifies. It costs nothing to check.",
+      "cta": "👉 Check If You Qualify — Free, No Commitment",
+      "name_tag": "SS_BF_PriceUrgency"
+    },
+    {
+      "id": "SS_BF_SocialProof",
+      "angle": "Social Proof + FOMO",
+      "hook": "Over 1.3 million UK homes now run on solar. Are you still paying for electricity you could be generating for free?",
+      "body": "While you're reading this, someone 3 streets away just got approved for a free solar install.\n\nThe homeowners who acted 12 months ago are now generating free electricity — and watching their bills drop to near zero.\n\nNot acting isn't neutral. It's choosing to keep paying.",
+      "cta": "👉 Find Out What You Qualify For — Takes 30 Seconds",
+      "name_tag": "SS_BF_SocialProof"
+    },
+    {
+      "id": "SS_BF_HomeValue",
+      "angle": "Home Value / Investment",
+      "hook": "Solar adds an average of £30,000 to UK property value. Have you done the maths?",
+      "body": "You're not just cutting your electricity bill — you're making a permanent upgrade to your biggest asset.\n\nEstate agents now flag solar as a major selling point. Buyers pay a premium for it.\n\nAnd if you qualify for a free install? That's £30k in value for £0 outlay.",
+      "cta": "👉 Get Your Free Home Assessment — No Cost, No Obligation",
+      "name_tag": "SS_BF_HomeValue"
+    },
+    {
+      "id": "SS_BF_ZeroBill",
+      "angle": "Energy Independence / Zero Bills",
+      "hook": "What if your electricity Direct Debit was £0? Not reduced. Zero.",
+      "body": "That's not a fantasy — it's what thousands of UK homeowners are living right now.\n\nSolar panels generate your power. A battery stores what you don't use. Your bill disappears.\n\nNo more price hikes. No more standing charges. No more waiting to see what Ofgem does next.\n\nFind out in 30 seconds if your home can do this.",
+      "cta": "👉 Check Eligibility Free — Takes 30 Seconds",
+      "name_tag": "SS_BF_ZeroBill"
+    },
+    {
+      "id": "SS_BF_ObjectionKiller",
+      "angle": "Objection Killer / Easiest Yes",
+      "hook": "No upfront cost. Free survey. Installed in a day. So what's stopping you?",
+      "body": "If you own your home — that's it. That's the only qualification.\n\nWe send a specialist to assess your roof for free. No hard sell. No pressure. Just an honest look at what you qualify for.\n\nIf it's not right for you, we'll tell you. But most homeowners are surprised by what they can get.\n\nAll you have to do is ask.",
+      "cta": "👉 Book Your Free Survey — Completely No Obligation",
+      "name_tag": "SS_BF_ObjectionKiller"
+    }
+  ]
+}
